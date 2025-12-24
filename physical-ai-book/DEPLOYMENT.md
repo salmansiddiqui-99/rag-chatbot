@@ -90,17 +90,17 @@ Update configuration files with your GitHub username:
 
 ```typescript
 // Line 11-13: Update GitHub organization and project details
-url: 'https://YOURUSERNAME.github.io',  // Replace YOURUSERNAME
-baseUrl: '/physical-ai-humanoid-robotics-book/',
-organizationName: 'YOURUSERNAME',  // Replace YOURUSERNAME
-projectName: 'physical-ai-humanoid-robotics-book',
+url: 'https://salmansiddiqui-99.github.io',
+baseUrl: '/rag-chatbot/',
+organizationName: 'salmansiddiqui-99',
+projectName: 'rag-chatbot',
 ```
 
 #### `README.md`
 
 ```markdown
 # Update the live URL (around line 15)
-🔗 **Live Site**: https://YOURUSERNAME.github.io/physical-ai-humanoid-robotics-book/
+🔗 **Live Site**: https://salmansiddiqui-99.github.io/rag-chatbot/
 ```
 
 **Verify Configuration**:

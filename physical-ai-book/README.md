@@ -1,6 +1,6 @@
 # Physical AI & Humanoid Robotics Online Book
 
-[![Build Status](https://github.com/salmansiddiqui-99/physical-ai-humanoid-robotics-book/actions/workflows/deploy.yml/badge.svg)](https://github.com/salmansiddiqui-99/physical-ai-humanoid-robotics-book/actions)
+[![Build Status](https://github.com/salmansiddiqui-99/rag-chatbot/actions/workflows/deploy-book.yml/badge.svg)](https://github.com/salmansiddiqui-99/rag-chatbot/actions)
 [![Docusaurus](https://img.shields.io/badge/Docusaurus-3.9.2-blue.svg)](https://docusaurus.io/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -8,7 +8,7 @@
 
 A comprehensive online course covering Physical AI and Humanoid Robotics, built with Docusaurus and following the Spec-Kit Plus workflow.
 
-🌐 **Live Site**: [https://salmansiddiqui-99.github.io/physical-ai-humanoid-robotics-book/](https://salmansiddiqui-99.github.io/physical-ai-humanoid-robotics-book/)
+🌐 **Live Site**: [https://salmansiddiqui-99.github.io/rag-chatbot/](https://salmansiddiqui-99.github.io/rag-chatbot/)
 
 ## 🚀 Quick Start
 

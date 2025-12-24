@@ -15,11 +15,11 @@ const config: Config = {
 
   // Production URL (T007 - Update with actual GitHub Pages URL)
   url: 'https://salmansiddiqui-99.github.io',
-  baseUrl: '/physical-ai-humanoid-robotics-book/',
+  baseUrl: '/rag-chatbot/',
 
   // GitHub Pages deployment config (T007)
-  organizationName: 'salmansiddiqui-99', // Replace with your GitHub username
-  projectName: 'physical-ai-humanoid-robotics-book',
+  organizationName: 'salmansiddiqui-99',
+  projectName: 'rag-chatbot',
 
   onBrokenLinks: 'throw',
 
