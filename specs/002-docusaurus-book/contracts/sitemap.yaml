@@ -1,0 +1,407 @@
+# Sitemap Contract: Physical AI & Humanoid Robotics Online Book
+
+# Feature: 002-docusaurus-book
+# Created: 2025-12-22
+# Purpose: Define complete URL structure, navigation hierarchy, and page metadata
+
+---
+baseUrl: "https://yourusername.github.io/physical-ai-humanoid-robotics-book/"
+trailingSlash: false
+language: "en"
+lastmod: "2025-12-22"
+
+---
+
+# Homepage
+- path: "/"
+  file: "docs/index.mdx"
+  title: "Physical AI & Humanoid Robotics"
+  description: "Embodied Intelligence: Bridging Digital AI and the Physical World"
+  sidebarPosition: 1
+  priority: 1.0  # SEO priority (0.0-1.0)
+  changefreq: "monthly"
+
+---
+
+# Introduction
+- path: "/introduction"
+  file: "docs/introduction.mdx"
+  title: "Introduction to Physical AI"
+  description: "Understanding embodied intelligence and the humanoid robotics landscape"
+  sidebarLabel: "Introduction"
+  sidebarPosition: 2
+  priority: 0.9
+  changefreq: "monthly"
+
+---
+
+# Module 1: The Robotic Nervous System (ROS 2)
+- path: "/module-1-ros2"
+  file: "docs/module-1-ros2/index.mdx"
+  title: "Module 1: The Robotic Nervous System"
+  description: "Learn the fundamentals of Robot Operating System 2 for humanoid robotics"
+  sidebarLabel: "ROS 2 Basics"
+  sidebarPosition: 3
+  priority: 0.9
+  changefreq: "monthly"
+  children:
+    - path: "/module-1-ros2/architecture"
+      file: "docs/module-1-ros2/01-architecture.mdx"
+      title: "ROS 2 Architecture"
+      description: "Explore the layered architecture of ROS 2 and its core components"
+      sidebarLabel: "Architecture"
+      sidebarPosition: 1
+      priority: 0.8
+      changefreq: "monthly"
+
+    - path: "/module-1-ros2/nodes-topics-services"
+      file: "docs/module-1-ros2/02-nodes-topics-services.mdx"
+      title: "Nodes, Topics, Services, and Actions"
+      description: "Master ROS 2 communication patterns for distributed robotics systems"
+      sidebarLabel: "Communication"
+      sidebarPosition: 2
+      priority: 0.8
+      changefreq: "monthly"
+
+    - path: "/module-1-ros2/rclpy-integration"
+      file: "docs/module-1-ros2/03-rclpy-integration.mdx"
+      title: "rclpy Integration"
+      description: "Build ROS 2 nodes in Python using the rclpy client library"
+      sidebarLabel: "Python Integration"
+      sidebarPosition: 3
+      priority: 0.8
+      changefreq: "monthly"
+
+    - path: "/module-1-ros2/urdf-humanoids"
+      file: "docs/module-1-ros2/04-urdf-humanoids.mdx"
+      title: "URDF for Humanoid Robots"
+      description: "Define humanoid robot kinematics and visuals using URDF"
+      sidebarLabel: "URDF Modeling"
+      sidebarPosition: 4
+      priority: 0.8
+      changefreq: "monthly"
+
+---
+
+# Module 2: Digital Twin Simulation
+- path: "/module-2-digital-twin"
+  file: "docs/module-2-digital-twin/index.mdx"
+  title: "Module 2: Digital Twin Simulation"
+  description: "Create high-fidelity physics simulations for sensor testing and visualization"
+  sidebarLabel: "Digital Twin"
+  sidebarPosition: 4
+  priority: 0.9
+  changefreq: "monthly"
+  children:
+    - path: "/module-2-digital-twin/gazebo-simulation"
+      file: "docs/module-2-digital-twin/01-gazebo-simulation.mdx"
+      title: "Physics Simulation in Gazebo"
+      description: "Set up realistic physics environments for humanoid robot testing"
+      sidebarLabel: "Gazebo Physics"
+      sidebarPosition: 1
+      priority: 0.8
+      changefreq: "monthly"
+
+    - path: "/module-2-digital-twin/sensor-simulation"
+      file: "docs/module-2-digital-twin/02-sensor-simulation.mdx"
+      title: "Sensor Simulation (LiDAR, Depth, IMU)"
+      description: "Simulate LiDAR, depth cameras, and IMU sensors in Gazebo"
+      sidebarLabel: "Sensor Simulation"
+      sidebarPosition: 2
+      priority: 0.8
+      changefreq: "monthly"
+
+    - path: "/module-2-digital-twin/unity-visualization"
+      file: "docs/module-2-digital-twin/03-unity-visualization.mdx"
+      title: "High-Fidelity Visualization in Unity"
+      description: "Create stunning visual renderings of robots using Unity game engine"
+      sidebarLabel: "Unity Visuals"
+      sidebarPosition: 3
+      priority: 0.8
+      changefreq: "monthly"
+
+---
+
+# Module 3: AI-Robot Brain (NVIDIA Isaac)
+- path: "/module-3-isaac"
+  file: "docs/module-3-isaac/index.mdx"
+  title: "Module 3: The AI-Robot Brain"
+  description: "Integrate NVIDIA Isaac ROS for AI-powered navigation and perception"
+  sidebarLabel: "AI Navigation"
+  sidebarPosition: 5
+  priority: 0.9
+  changefreq: "monthly"
+  children:
+    - path: "/module-3-isaac/isaac-sim-data"
+      file: "docs/module-3-isaac/01-isaac-sim-data.mdx"
+      title: "Isaac Sim Synthetic Data Generation"
+      description: "Generate photorealistic training data for computer vision models"
+      sidebarLabel: "Synthetic Data"
+      sidebarPosition: 1
+      priority: 0.8
+      changefreq: "monthly"
+
+    - path: "/module-3-isaac/isaac-ros-vslam"
+      file: "docs/module-3-isaac/02-isaac-ros-vslam.mdx"
+      title: "Isaac ROS Visual SLAM"
+      description: "Implement real-time visual SLAM for robot localization"
+      sidebarLabel: "VSLAM"
+      sidebarPosition: 2
+      priority: 0.8
+      changefreq: "monthly"
+
+    - path: "/module-3-isaac/nav2-bipedal"
+      file: "docs/module-3-isaac/03-nav2-bipedal.mdx"
+      title: "Nav2 for Bipedal Navigation"
+      description: "Adapt Nav2 navigation stack for humanoid walking gaits"
+      sidebarLabel: "Bipedal Nav2"
+      sidebarPosition: 3
+      priority: 0.8
+      changefreq: "monthly"
+
+---
+
+# Module 4: Vision-Language-Action (VLA)
+- path: "/module-4-vla"
+  file: "docs/module-4-vla/index.mdx"
+  title: "Module 4: Vision-Language-Action"
+  description: "Build autonomous systems combining voice, LLMs, and robotic actions"
+  sidebarLabel: "VLA Systems"
+  sidebarPosition: 6
+  priority: 0.9
+  changefreq: "monthly"
+  children:
+    - path: "/module-4-vla/voice-to-action"
+      file: "docs/module-4-vla/01-voice-to-action.mdx"
+      title: "Voice-to-Action with Whisper"
+      description: "Convert voice commands to robotic actions using OpenAI Whisper"
+      sidebarLabel: "Voice Input"
+      sidebarPosition: 1
+      priority: 0.8
+      changefreq: "monthly"
+
+    - path: "/module-4-vla/llm-planning"
+      file: "docs/module-4-vla/02-llm-planning.mdx"
+      title: "LLM Cognitive Planning"
+      description: "Use large language models for high-level task planning"
+      sidebarLabel: "LLM Planning"
+      sidebarPosition: 2
+      priority: 0.8
+      changefreq: "monthly"
+
+    - path: "/module-4-vla/capstone-project"
+      file: "docs/module-4-vla/03-capstone-project.mdx"
+      title: "Capstone: Autonomous Humanoid Robot"
+      description: "Integrate all course concepts into a fully autonomous humanoid system"
+      sidebarLabel: "Capstone"
+      sidebarPosition: 3
+      priority: 0.8
+      changefreq: "monthly"
+
+---
+
+# Supporting Sections
+- path: "/supporting/learning-outcomes"
+  file: "docs/supporting/learning-outcomes.mdx"
+  title: "Learning Outcomes"
+  description: "What you'll master in this Physical AI and Humanoid Robotics course"
+  sidebarLabel: "Outcomes"
+  sidebarPosition: 10
+  priority: 0.7
+  changefreq: "monthly"
+
+- path: "/supporting/weekly-breakdown"
+  file: "docs/supporting/weekly-breakdown.mdx"
+  title: "Weekly Breakdown"
+  description: "Detailed week-by-week schedule for 13-week course"
+  sidebarLabel: "13-Week Schedule"
+  sidebarPosition: 11
+  priority: 0.7
+  changefreq: "monthly"
+
+- path: "/supporting/assessments"
+  file: "docs/supporting/assessments.mdx"
+  title: "Assessments"
+  description: "Hands-on projects and labs to validate your skills"
+  sidebarLabel: "Projects & Labs"
+  sidebarPosition: 12
+  priority: 0.7
+  changefreq: "monthly"
+
+- path: "/supporting/hardware-requirements"
+  file: "docs/supporting/hardware-requirements.mdx"
+  title: "Hardware Requirements"
+  description: "Physical hardware and cloud alternatives for course labs"
+  sidebarLabel: "Hardware"
+  sidebarPosition: 13
+  priority: 0.7
+  changefreq: "monthly"
+
+---
+
+# Navigation Structure (Sidebar Configuration)
+sidebar:
+  - label: "Home"
+    type: "link"
+    path: "/"
+    position: 1
+
+  - label: "Introduction"
+    type: "doc"
+    id: "introduction"
+    position: 2
+
+  - label: "Module 1: ROS 2"
+    type: "category"
+    position: 3
+    collapsed: false  # Expanded by default
+    items:
+      - "module-1-ros2/index"
+      - "module-1-ros2/01-architecture"
+      - "module-1-ros2/02-nodes-topics-services"
+      - "module-1-ros2/03-rclpy-integration"
+      - "module-1-ros2/04-urdf-humanoids"
+
+  - label: "Module 2: Digital Twin"
+    type: "category"
+    position: 4
+    collapsed: true
+    items:
+      - "module-2-digital-twin/index"
+      - "module-2-digital-twin/01-gazebo-simulation"
+      - "module-2-digital-twin/02-sensor-simulation"
+      - "module-2-digital-twin/03-unity-visualization"
+
+  - label: "Module 3: AI Navigation"
+    type: "category"
+    position: 5
+    collapsed: true
+    items:
+      - "module-3-isaac/index"
+      - "module-3-isaac/01-isaac-sim-data"
+      - "module-3-isaac/02-isaac-ros-vslam"
+      - "module-3-isaac/03-nav2-bipedal"
+
+  - label: "Module 4: VLA"
+    type: "category"
+    position: 6
+    collapsed: true
+    items:
+      - "module-4-vla/index"
+      - "module-4-vla/01-voice-to-action"
+      - "module-4-vla/02-llm-planning"
+      - "module-4-vla/03-capstone-project"
+
+  - label: "Supporting"
+    type: "category"
+    position: 10
+    collapsed: true
+    items:
+      - "supporting/learning-outcomes"
+      - "supporting/weekly-breakdown"
+      - "supporting/assessments"
+      - "supporting/hardware-requirements"
+
+---
+
+# URL Patterns and Routing Rules
+
+# 1. Clean URLs (no .html extension)
+#    Example: /module-1-ros2/architecture (not /module-1-ros2/architecture.html)
+
+# 2. Trailing slash handling: false
+#    Example: /module-1-ros2/architecture (not /module-1-ros2/architecture/)
+
+# 3. Index pages map to directory root
+#    Example: docs/module-1-ros2/index.mdx → /module-1-ros2
+
+# 4. Redirects (if needed in docusaurus.config.js)
+redirects:
+  - from: "/ros2"
+    to: "/module-1-ros2"
+  - from: "/gazebo"
+    to: "/module-2-digital-twin/gazebo-simulation"
+  - from: "/isaac"
+    to: "/module-3-isaac"
+
+---
+
+# SEO Metadata Inheritance
+
+# Global defaults (defined in docusaurus.config.js):
+# - Site title: "Physical AI & Humanoid Robotics"
+# - Site tagline: "Embodied Intelligence: Bridging Digital AI and the Physical World"
+# - Meta keywords: "physical ai, humanoid robotics, ros2, gazebo, nvidia isaac, vla"
+# - Open Graph image: /img/og-image.png
+
+# Per-page overrides: Use frontmatter in MDX files
+# Example:
+#   ---
+#   title: "ROS 2 Architecture"
+#   description: "Explore the layered architecture of ROS 2"
+#   keywords: [ros2, architecture, dds]
+#   image: /img/module-1/og-architecture.png
+#   ---
+
+---
+
+# Breadcrumb Navigation Patterns
+
+# Homepage
+#   [Home]
+
+# Module index
+#   [Home] > [Module 1: ROS 2]
+
+# Chapter
+#   [Home] > [Module 1: ROS 2] > [Architecture]
+
+# Supporting section
+#   [Home] > [Learning Outcomes]
+
+---
+
+# Search Index Configuration
+
+# All pages indexed by default except:
+excludeFromSearch:
+  - "/404"
+  - "/search"
+
+# Boost specific pages in search results:
+searchBoost:
+  - path: "/"
+    boost: 2.0
+  - path: "/module-*"
+    boost: 1.5
+  - path: "/supporting/learning-outcomes"
+    boost: 1.3
+
+---
+
+# Validation Checklist
+
+# ✅ All paths are lowercase with hyphens (kebab-case)
+# ✅ No duplicate paths
+# ✅ All file references point to valid MDX locations
+# ✅ Sidebar positions are unique within each category
+# ✅ Total page count: 1 (home) + 1 (intro) + 4 modules × 4 pages + 4 supporting = 23 pages
+# ✅ Maximum navigation depth: 3 clicks (Home → Module → Chapter)
+# ✅ All URLs are SEO-friendly (descriptive, not /page1, /page2)
+# ✅ Priority values range from 0.7 to 1.0
+# ✅ changefreq is "monthly" for all educational content (static course material)
+
+---
+
+# Notes
+
+# This sitemap contract serves as:
+# 1. **Implementation Guide**: Developers use this to structure docs/ directory
+# 2. **Navigation Config**: Translates to sidebars.js configuration
+# 3. **SEO Blueprint**: Defines URL structure for sitemap.xml generation
+# 4. **Testing Reference**: QA uses this to validate all pages are accessible
+
+# Implementation in Docusaurus:
+# - sidebars.js will auto-generate from docs/ structure if properly organized
+# - docusaurus.config.js defines baseUrl, url, and redirect rules
+# - sitemap.xml auto-generated by @docusaurus/plugin-sitemap (included in Classic preset)

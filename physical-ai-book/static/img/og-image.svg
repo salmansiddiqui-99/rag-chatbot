@@ -1,0 +1,32 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A8A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1F2937;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Title -->
+  <text x="600" y="250" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Physical AI &amp; Humanoid Robotics</text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="320" font-family="Arial, sans-serif" font-size="36" fill="#06B6D4" text-anchor="middle">Embodied Intelligence: Bridging Digital AI and the Physical World</text>
+  
+  <!-- Robot icon -->
+  <rect x="560" y="380" width="80" height="100" rx="10" fill="#06B6D4" opacity="0.8"/>
+  <circle cx="585" cy="420" r="8" fill="#FFFFFF"/>
+  <circle cx="615" cy="420" r="8" fill="#FFFFFF"/>
+  <path d="M570 460 L580 470 L590 460 L600 470 L610 460 L620 470 L630 460" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Tech stack badges -->
+  <rect x="450" y="520" width="100" height="40" rx="8" fill="#3B82F6"/>
+  <text x="500" y="547" font-family="Arial, sans-serif" font-size="20" fill="#FFFFFF" text-anchor="middle" font-weight="600">ROS 2</text>
+  
+  <rect x="560" y="520" width="120" height="40" rx="8" fill="#10B981"/>
+  <text x="620" y="547" font-family="Arial, sans-serif" font-size="20" fill="#FFFFFF" text-anchor="middle" font-weight="600">Gazebo</text>
+  
+  <rect x="690" y="520" width="160" height="40" rx="8" fill="#8B5CF6"/>
+  <text x="770" y="547" font-family="Arial, sans-serif" font-size="20" fill="#FFFFFF" text-anchor="middle" font-weight="600">NVIDIA Isaac</text>
+</svg>

@@ -1,0 +1,120 @@
+---
+id: module-3-isaac
+title: 'Module 3: The AI-Robot Brain (NVIDIA Isaac)'
+sidebar_label: 'NVIDIA Isaac'
+sidebar_position: 5
+description: 'Leverage NVIDIA Isaac Sim and Isaac ROS for AI-powered perception and navigation'
+keywords: [nvidia isaac, isaac sim, isaac ros, vslam, synthetic data, nav2, gpu acceleration]
+---
+
+# Module 3: The AI-Robot Brain (NVIDIA Isaac)
+
+## Overview
+
+NVIDIA Isaac is an end-to-end platform for AI-powered robotics, combining:
+
+- **Isaac Sim**: Photorealistic simulation with GPU-accelerated physics (PhysX)
+- **Isaac ROS**: Pre-built AI perception pipelines (VSLAM, object detection, pose estimation)
+- **Isaac SDK**: Low-level robot control and sensor drivers (deprecated, migrated to ROS 2)
+
+This module focuses on Isaac Sim for **synthetic data generation** and Isaac ROS for **real-time perception** on NVIDIA Jetson hardware.
+
+---
+
+## What You'll Learn
+
+By the end of this module, you will:
+
+- ✅ **Generate Synthetic Data**: Create millions of labeled images for training perception models
+- ✅ **Implement VSLAM**: Visual Simultaneous Localization and Mapping for navigation
+- ✅ **Integrate Isaac ROS**: Use GPU-accelerated perception nodes on Jetson Orin
+- ✅ **Adapt Nav2**: Configure navigation stacks for bipedal humanoid robots
+
+---
+
+## Topics Covered
+
+### [1. Isaac Sim Synthetic Data](./01-isaac-sim.mdx)
+
+Master photorealistic simulation and domain randomization for dataset generation.
+
+**Key Concepts**: Omniverse, Replicator, USD format, ray tracing
+
+---
+
+### [2. Isaac ROS VSLAM](./02-isaac-ros-vslam.mdx)
+
+Implement visual SLAM using stereo cameras and GPU-accelerated feature extraction.
+
+**Key Concepts**: ORB-SLAM3, NVIDIA VPI, pose estimation, loop closure
+
+---
+
+### [3. Nav2 for Bipedal Navigation](./03-nav2-bipedal.mdx)
+
+Adapt ROS 2 Nav2 stack for humanoid walking (vs. wheeled robots).
+
+**Key Concepts**: Footstep planning, dynamic stability, costmaps, behavior trees
+
+---
+
+## Prerequisites
+
+- **Modules 1-2 Complete**: ROS 2 fundamentals, Gazebo simulation
+- **NVIDIA GPU**: RTX series (2060+) for Isaac Sim, or cloud access
+- **Jetson Hardware** (Optional): Orin Nano for Isaac ROS deployment
+
+---
+
+## Estimated Time
+
+**8-10 hours** over 3 weeks
+
+---
+
+## Hardware Requirements
+
+### **Local Setup**
+
+- NVIDIA RTX 2060+ (8GB VRAM minimum)
+- Ubuntu 22.04 + ROS 2 Humble
+
+### **Cloud Alternative** (Free Tier)
+
+- NVIDIA Omniverse Cloud (1 year free trial)
+
+---
+
+## Real-World Context
+
+- **Boston Dynamics**: Atlas uses Isaac Sim for parkour training
+- **Tesla**: Optimus simulation pipelines leverage PhysX
+- **Amazon Robotics**: Nav2 deployed on 100,000+ warehouse robots
+
+---
+
+## Project 3 Preview
+
+**Isaac VSLAM Integration**:
+
+- Stereo camera setup in Isaac Sim
+- Visual SLAM mapping and localization
+- Real-time pose visualization in RViz2
+
+[View Project 3 Requirements →](../supporting/assessments.mdx)
+
+---
+
+## Additional Resources
+
+- [Isaac Sim Documentation](https://docs.omniverse.nvidia.com/isaacsim/latest/)
+- [Isaac ROS GitHub](https://github.com/NVIDIA-ISAAC-ROS)
+- [Nav2 Documentation](https://navigation.ros.org/)
+
+---
+
+## Next Steps
+
+Let's start with Isaac Sim for synthetic data generation.
+
+[Continue to Isaac Sim →](./01-isaac-sim.mdx)

@@ -1,0 +1,165 @@
+---
+id: module-2-digital-twin
+title: 'Module 2: Digital Twin Simulation'
+sidebar_label: 'Digital Twin'
+sidebar_position: 4
+description: 'Create high-fidelity physics simulations in Gazebo and Unity for humanoid robotics'
+keywords: [digital twin, gazebo, simulation, physics, sensors, unity, lidar, depth camera, imu]
+---
+
+# Module 2: Digital Twin Simulation
+
+## Overview
+
+**Digital Twins** are virtual replicas of physical systems that mirror real-world behavior with high fidelity. For robotics, digital twins enable:
+
+- **Risk-Free Testing**: Validate algorithms before deploying to expensive hardware
+- **Parallel Development**: Software teams iterate while hardware is being built
+- **Synthetic Data Generation**: Train perception models with unlimited labeled data
+- **Failure Analysis**: Reproduce and debug crashes in controlled environments
+
+This module teaches you to build physics-accurate simulations in **Gazebo** (open-source) and **Unity** (high-fidelity visualization), essential skills for modern robotics workflows.
+
+---
+
+## What You'll Learn
+
+By the end of this module, you will:
+
+- ✅ **Model Physics**: Simulate gravity, friction, collisions, and contact dynamics in Gazebo
+- ✅ **Integrate Sensors**: Add virtual LiDAR, depth cameras, and IMUs with realistic noise models
+- ✅ **Build Environments**: Design Gazebo worlds with obstacles, terrain, and dynamic objects
+- ✅ **Visualize in Unity**: Render photorealistic scenes for presentations and testing
+- ✅ **Validate Sim-to-Real**: Understand reality gap mitigation strategies
+
+---
+
+## Topics Covered
+
+### [1. Physics Simulation in Gazebo](./01-gazebo-physics.mdx)
+
+Master Gazebo's ODE physics engine, collision detection, and force/torque modeling.
+
+**Key Concepts**: SDF worlds, physics parameters, contact dynamics, plugin system
+
+---
+
+### [2. Sensor Simulation (LiDAR, Depth, IMU)](./02-sensor-simulation.mdx)
+
+Simulate sensors with noise, latency, and environmental effects (fog, reflections).
+
+**Key Concepts**: Ray casting, point clouds, sensor fusion, calibration
+
+---
+
+### [3. High-Fidelity Visualization in Unity](./03-unity-visualization.mdx)
+
+Use Unity's HDRP for photorealistic rendering and ROS# bridge for ROS 2 integration.
+
+**Key Concepts**: URDF import, real-time sync, camera rendering, asset optimization
+
+---
+
+## Prerequisites
+
+- **Module 1 Complete**: Understanding of ROS 2 topics, URDF, and nodes
+- **Basic Physics**: Forces, torque, moments of inertia
+- **3D Modeling** (Optional): Blender or CAD software for custom assets
+
+---
+
+## Estimated Time
+
+**6-8 hours** over 2 weeks
+
+- **Reading**: 2 hours (physics engines, sensor models)
+- **Hands-On Labs**: 5 hours (building worlds, integrating sensors)
+- **Project 2**: 3-4 hours (Gazebo digital twin with sensor fusion)
+
+---
+
+## Hardware Requirements
+
+### **Software** (All Free)
+
+- Gazebo Classic 11 or Gazebo Fortress
+- Unity 2022.3 LTS (optional, for high-fidelity visuals)
+- ROS 2 Humble + `gazebo_ros_pkgs`
+
+### **Hardware** (Recommended)
+
+- GPU with 2GB+ VRAM (for Unity rendering)
+- 8GB+ RAM (Gazebo physics simulation)
+
+---
+
+## Real-World Context
+
+### **Why Digital Twins Matter**
+
+| Scenario            | Physical Testing                | Digital Twin                      |
+| ------------------- | ------------------------------- | --------------------------------- |
+| **Cost**            | $1,000s in hardware damage      | $0 (unlimited resets)             |
+| **Speed**           | 1 test/hour (setup time)        | 100s of tests/hour (parallelized) |
+| **Reproducibility** | Hard (environmental variations) | Perfect (deterministic physics)   |
+| **Safety**          | Risk of injury/damage           | Zero risk                         |
+| **Data Collection** | Expensive manual labeling       | Auto-generated ground truth       |
+
+### **Industry Examples**
+
+- **Tesla Autopilot**: Millions of simulated miles in scaled-down virtual worlds
+- **Boston Dynamics**: Atlas backflip trained 100% in simulation (IsaacGym)
+- **NASA Mars Rovers**: Terrain testing in Gazebo before Martian deployment
+- **Amazon Robotics**: Warehouse layouts validated in Unity before construction
+
+---
+
+## Learning Path
+
+```mermaid
+graph LR
+    A[Gazebo Physics] --> B[Sensor Integration]
+    B --> C[Unity Visualization]
+    C --> D[Project 2]
+```
+
+---
+
+## Key Takeaways
+
+After completing this module, you'll understand:
+
+- **Physics Engine Tuning**: Adjust timesteps, solvers, and constraints for stability
+- **Sensor Models**: Implement realistic noise, occlusions, and field-of-view limitations
+- **Reality Gap**: Identify simulation artifacts and apply domain randomization
+- **Workflow Optimization**: Use Gazebo for rapid iteration, Unity for final validation
+
+---
+
+## Project 2 Preview
+
+**Gazebo Humanoid Digital Twin**:
+
+- Physics-accurate environment (stairs, obstacles, uneven terrain)
+- Sensor suite: LiDAR, depth camera, IMU
+- Sensor fusion for obstacle avoidance
+- RViz2 visualization of all sensor data
+
+[View Project 2 Requirements →](../supporting/assessments.mdx#project-2-gazebo-digital-twin)
+
+---
+
+## Additional Resources
+
+- [Gazebo Documentation](http://gazebosim.org/docs)
+- [Unity Robotics Hub](https://github.com/Unity-Technologies/Unity-Robotics-Hub)
+- [SDF Format Spec](http://sdformat.org/)
+- [ROS# (Unity Bridge)](https://github.com/siemens/ros-sharp)
+
+---
+
+## Next Steps
+
+Ready to build your first virtual world? Let's start with Gazebo's physics engine.
+
+[Continue to Gazebo Physics Simulation →](./01-gazebo-physics.mdx)

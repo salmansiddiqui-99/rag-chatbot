@@ -1,0 +1,292 @@
+---
+id: weekly-breakdown
+title: 'Weekly Breakdown'
+sidebar_label: '13-Week Schedule'
+sidebar_position: 11
+description: 'Detailed week-by-week schedule for the Physical AI and Humanoid Robotics course'
+keywords: [schedule, weekly breakdown, timeline, curriculum]
+---
+
+# Weekly Breakdown
+
+This course spans **13 weeks** with ~6-8 hours of study time per week (mix of reading, labs, and projects).
+
+---
+
+## Week 1: Introduction to Physical AI
+
+**Module**: [Introduction](../introduction.mdx)
+
+**Topics**:
+
+- What is Physical AI? Embodied intelligence vs. digital AI
+- The humanoid robotics landscape (Boston Dynamics, Tesla Optimus, Figure)
+- Course roadmap and learning objectives
+- Physical AI stack overview
+
+**Deliverables**:
+
+- Set up ROS 2 Humble development environment
+- Complete "Hello World" ROS 2 publisher-subscriber node
+- Install Gazebo Classic 11
+
+**Resources**:
+
+- [Introduction to Physical AI](../introduction.mdx)
+- [Learning Outcomes](./learning-outcomes.mdx)
+- [ROS 2 Installation Guide](https://docs.ros.org/en/humble/Installation.html)
+
+---
+
+## Week 2: ROS 2 Fundamentals
+
+**Module**: [Module 1 - ROS 2](../module-1-ros2/index.mdx)
+
+**Topics**:
+
+- ROS 2 architecture and DDS middleware
+- Nodes, topics, publishers, and subscribers
+- ROS 2 command-line tools (`ros2 node`, `ros2 topic`, `ros2 service`)
+- Quality of Service (QoS) policies
+
+**Deliverables**:
+
+- **Lab 1**: Create a publisher-subscriber pair for simulated sensor data
+- **Lab 2**: Implement a simple ROS 2 service for robot configuration
+
+**Resources**:
+
+- [ROS 2 Architecture](../module-1-ros2/01-architecture.mdx)
+- [Nodes, Topics, Services](../module-1-ros2/02-nodes-topics-services.mdx)
+
+---
+
+## Week 3: rclpy Development & URDF Modeling
+
+**Module**: [Module 1 - ROS 2](../module-1-ros2/index.mdx)
+
+**Topics**:
+
+- Python ROS 2 nodes with rclpy
+- Timers, parameters, and logging
+- URDF syntax for robot descriptions
+- Defining joints, links, and kinematic chains
+
+**Deliverables**:
+
+- **Lab 3**: Build a configurable ROS 2 node with parameters
+- Create URDF model for a simple 2-DOF arm
+
+**Resources**:
+
+- [rclpy Integration](../module-1-ros2/03-rclpy-integration.mdx)
+- [URDF for Humanoids](../module-1-ros2/04-urdf-humanoids.mdx)
+
+---
+
+## Week 4: Project 1 - ROS 2 Humanoid Control System
+
+**Module**: [Module 1 - ROS 2](../module-1-ros2/index.mdx)
+
+**Milestone**: Complete and submit **Project 1**
+
+**Deliverables**:
+
+- ROS 2 architecture with 5+ nodes
+- URDF model for humanoid with 20+ DOF
+- Gazebo simulation with physics
+- 2-minute demo video
+
+**Resources**:
+
+- [Assessments](./assessments.mdx#project-1-ros-2-humanoid-control-system)
+
+---
+
+## Week 5: Gazebo Physics Simulation
+
+**Module**: [Module 2 - Digital Twin](../module-2-digital-twin/index.mdx)
+
+**Topics**:
+
+- SDF world files and physics engines
+- Collision detection and contact dynamics
+- Spawning robots in Gazebo
+- Gazebo plugins (sensors, controllers)
+
+**Deliverables**:
+
+- **Lab 4**: Create a custom Gazebo world with obstacles
+- Spawn humanoid URDF in Gazebo and control joints
+
+**Resources**:
+
+- [Gazebo Physics](../module-2-digital-twin/01-gazebo-physics.mdx)
+
+---
+
+## Week 6: Sensor Simulation
+
+**Module**: [Module 2 - Digital Twin](../module-2-digital-twin/index.mdx)
+
+**Topics**:
+
+- LiDAR simulation (2D and 3D)
+- Depth camera setup (RealSense D435i)
+- IMU sensor integration
+- Sensor fusion basics
+
+**Deliverables**:
+
+- **Lab 5**: Integrate LiDAR and depth camera in Gazebo
+- Implement basic obstacle detection using sensor data
+
+**Resources**:
+
+- [Sensor Simulation](../module-2-digital-twin/02-sensor-simulation.mdx)
+
+---
+
+## Week 7: Project 2 - Gazebo Digital Twin
+
+**Module**: [Module 2 - Digital Twin](../module-2-digital-twin/index.mdx)
+
+**Milestone**: Complete and submit **Project 2**
+
+**Deliverables**:
+
+- Physics-accurate Gazebo environment
+- Sensor suite (LiDAR, depth camera, IMU)
+- Sensor fusion for obstacle avoidance
+- RViz2 visualization
+
+**Resources**:
+
+- [Assessments](./assessments.mdx#project-2-gazebo-digital-twin)
+
+---
+
+## Week 8: Isaac Sim Synthetic Data
+
+**Module**: [Module 3 - NVIDIA Isaac](../module-3-isaac/index.mdx)
+
+**Topics**:
+
+- Isaac Sim installation and USD format
+- Domain randomization with Replicator
+- Generating labeled datasets (bounding boxes, segmentation)
+- ROS 2 bridge for Isaac Sim
+
+**Deliverables**:
+
+- **Lab 6**: Generate 1000 labeled images of humanoid in varied environments
+- Train a simple object detector on synthetic data
+
+**Resources**:
+
+- [Isaac Sim](../module-3-isaac/01-isaac-sim.mdx)
+
+---
+
+## Week 9: Isaac ROS Visual SLAM
+
+**Module**: [Module 3 - NVIDIA Isaac](../module-3-isaac/index.mdx)
+
+**Topics**:
+
+- GPU-accelerated VSLAM pipeline
+- Stereo camera configuration
+- Loop closure detection
+- Saving and loading maps
+
+**Deliverables**:
+
+- **Lab 7**: Deploy Isaac ROS VSLAM on NVIDIA Jetson (or cloud instance)
+- Build map of simulated environment
+
+**Resources**:
+
+- [Isaac ROS VSLAM](../module-3-isaac/02-isaac-ros-vslam.mdx)
+
+---
+
+## Week 10: Nav2 for Bipedal Robots
+
+**Module**: [Module 3 - NVIDIA Isaac](../module-3-isaac/index.mdx)
+
+**Topics**:
+
+- Nav2 architecture and behavior trees
+- Footstep planning for humanoids
+- Costmap configuration
+- Zero Moment Point (ZMP) stability
+
+**Deliverables**:
+
+- **Lab 8**: Configure Nav2 for humanoid navigation
+- Implement basic footstep planner
+
+**Resources**:
+
+- [Nav2 Bipedal](../module-3-isaac/03-nav2-bipedal.mdx)
+
+---
+
+## Week 11: Voice Input & LLM Planning
+
+**Module**: [Module 4 - VLA](../module-4-vla/index.mdx)
+
+**Topics**:
+
+- OpenAI Whisper integration
+- Intent parsing with regex and LLMs
+- GPT-4 for task decomposition
+- Function calling and ReAct patterns
+
+**Deliverables**:
+
+- **Lab 9**: Build voice-controlled navigation system
+- Implement LLM-based task planner
+
+**Resources**:
+
+- [Voice-to-Action](../module-4-vla/01-whisper-voice.mdx)
+- [LLM Planning](../module-4-vla/02-llm-planning.mdx)
+
+---
+
+## Week 12-13: Capstone Project - Autonomous Humanoid
+
+**Module**: [Module 4 - VLA](../module-4-vla/index.mdx)
+
+**Milestone**: Complete and submit **Capstone Project**
+
+**Deliverables**:
+
+- End-to-end voice-controlled humanoid
+- Integration of all modules (ROS 2, Gazebo, Isaac, VLA)
+- Demo video (2-3 minutes)
+- Evaluation report with success metrics
+- Complete documentation and source code
+
+**Resources**:
+
+- [Capstone Project](../module-4-vla/03-capstone-project.mdx)
+- [Assessments](./assessments.mdx#capstone-autonomous-humanoid)
+
+---
+
+## Time Commitment Summary
+
+- **Reading**: 20 hours total (~1.5 hours/week)
+- **Labs**: 26 hours total (~2 hours/week)
+- **Projects**: 36 hours total (Projects 1-3: 8 hours each, Capstone: 12 hours)
+- **Total**: ~82 hours over 13 weeks (~6-8 hours/week)
+
+---
+
+[View all assessments →](./assessments.mdx)
+
+[View hardware requirements →](./hardware-requirements.mdx)
+
+[Return to Homepage →](/)

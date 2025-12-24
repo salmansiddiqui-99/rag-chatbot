@@ -1,0 +1,122 @@
+---
+id: module-4-vla
+title: 'Module 4: Vision-Language-Action (VLA)'
+sidebar_label: 'VLA Systems'
+sidebar_position: 6
+description: 'Build end-to-end systems that understand language and execute physical actions'
+keywords: [vla, vision language action, whisper, llm, gpt4, voice control, embodied ai, rt-2]
+---
+
+# Module 4: Vision-Language-Action (VLA)
+
+## Overview
+
+**Vision-Language-Action (VLA)** systems represent the frontier of Physical AI—robots that understand natural language commands and translate them into physical actions.
+
+**Example Interaction**:
+
+```
+Human: "Go to the kitchen and bring me the red cup from the counter"
+Robot: [Navigates to kitchen] → [Detects red cup] → [Grasps cup] → [Returns]
+```
+
+This module teaches you to build VLA pipelines using:
+
+- **Whisper**: Speech-to-text for voice commands
+- **LLMs** (GPT-4, Claude): Natural language understanding and task planning
+- **ROS 2 Actions**: Execution layer for physical skills
+
+---
+
+## What You'll Learn
+
+By the end of this module, you will:
+
+- ✅ **Integrate Voice Input**: Use OpenAI Whisper for robust speech recognition
+- ✅ **Implement LLM Planning**: Decompose complex commands into executable primitives
+- ✅ **Build Action Primitives**: Navigate, grasp, manipulate, return
+- ✅ **Create VLA Pipeline**: End-to-end system from voice to action
+
+---
+
+## Topics Covered
+
+### [1. Voice-to-Action with Whisper](./01-whisper-voice.mdx)
+
+Capture audio, transcribe with Whisper, and trigger robot actions.
+
+**Key Concepts**: PyAudio, Whisper API, intent parsing, error handling
+
+---
+
+### [2. LLM Cognitive Planning](./02-llm-planning.mdx)
+
+Use GPT-4 to decompose tasks into step-by-step plans with error recovery.
+
+**Key Concepts**: Prompt engineering, function calling, ReAct pattern, memory
+
+---
+
+### [3. Capstone: Autonomous Humanoid Project](./03-capstone-project.mdx)
+
+Integrate all modules into a voice-controlled humanoid that navigates, perceives, and manipulates.
+
+**Key Concepts**: System integration, multi-modal fusion, evaluation metrics
+
+---
+
+## Prerequisites
+
+- **Modules 1-3 Complete**: ROS 2, simulation, NVIDIA Isaac, Nav2
+- **OpenAI API Key** (Optional): For GPT-4 planning ($0.03/1K tokens)
+- **Microphone**: USB mic or built-in laptop mic
+
+---
+
+## Estimated Time
+
+**10-12 hours** over 3 weeks
+
+---
+
+## Hardware Requirements
+
+- Same as previous modules
+- **Microphone** for voice input
+- **API Credits** (optional): $5-10 for OpenAI API testing
+
+---
+
+## Real-World Context
+
+- **Google RT-2**: Vision-language-action model trained on 13 robot embodiments
+- **Figure 01 + OpenAI**: Humanoid using multimodal GPT-4V for manipulation
+- **1X NEO**: Voice-controlled home assistant humanoid
+
+---
+
+## Capstone Project Preview
+
+**Autonomous Voice-Controlled Humanoid**:
+
+- "Bring me the blue box from the shelf"
+- End-to-end execution with recovery behaviors
+- Evaluation: Success rate, execution time, error handling
+
+[View Capstone Requirements →](../supporting/assessments.mdx#capstone-autonomous-humanoid)
+
+---
+
+## Additional Resources
+
+- [OpenAI Whisper](https://github.com/openai/whisper)
+- [LangChain Documentation](https://python.langchain.com/)
+- [Google RT-2 Paper](https://robotics-transformer2.github.io/)
+
+---
+
+## Next Steps
+
+Let's start by integrating voice input with Whisper.
+
+[Continue to Voice-to-Action →](./01-whisper-voice.mdx)

@@ -1,0 +1,202 @@
+{
+  "examples": [
+    {
+      "name": "Simple RAG Query",
+      "description": "Basic question about book content using RAG mode",
+      "request": {
+        "query": "What is ROS 2 and how is it used in robotics?",
+        "selected_text": null,
+        "conversation_history": null
+      },
+      "expected_response": {
+        "mode": "rag",
+        "response_contains": ["ROS 2", "Robot Operating System", "robotics"],
+        "source_chunks_count_min": 1,
+        "source_chunks_count_max": 5
+      }
+    },
+    {
+      "name": "Selected Text Simplification",
+      "description": "Request to simplify user-selected technical text",
+      "request": {
+        "query": "Explain this in simpler terms",
+        "selected_text": "Hydraulic actuators use pressurized fluid to generate mechanical force. They offer high power-to-weight ratios, making them suitable for heavy-duty humanoid applications. The main components include a pump, valves, and cylinders connected via high-pressure hoses.",
+        "conversation_history": null
+      },
+      "expected_response": {
+        "mode": "selected_text",
+        "response_contains": ["hydraulic", "fluid", "force"],
+        "source_chunks_count": 0
+      }
+    },
+    {
+      "name": "Follow-up Question with Context",
+      "description": "Context-aware follow-up leveraging conversation history",
+      "request": {
+        "query": "How do they compare to electric motors?",
+        "selected_text": null,
+        "conversation_history": [
+          {
+            "role": "user",
+            "content": "What are hydraulic actuators?"
+          },
+          {
+            "role": "assistant",
+            "content": "Hydraulic actuators use pressurized fluid to generate mechanical force. They are commonly used in humanoid robotics for high-force applications."
+          }
+        ]
+      },
+      "expected_response": {
+        "mode": "rag",
+        "response_contains": ["hydraulic", "electric", "motor", "comparison"],
+        "source_chunks_count_min": 1
+      }
+    },
+    {
+      "name": "Out-of-Scope Query",
+      "description": "Question about content not in the book",
+      "request": {
+        "query": "What is the weather like in Paris today?",
+        "selected_text": null,
+        "conversation_history": null
+      },
+      "expected_response": {
+        "mode": "rag",
+        "response_contains": ["couldn't find", "not in the book", "no information"],
+        "source_chunks_count": 0
+      }
+    },
+    {
+      "name": "Multi-Chapter Query",
+      "description": "Question requiring information from multiple chapters",
+      "request": {
+        "query": "What are the main components of a humanoid robot and how do they work together?",
+        "selected_text": null,
+        "conversation_history": null
+      },
+      "expected_response": {
+        "mode": "rag",
+        "response_contains": ["components", "humanoid", "robot"],
+        "source_chunks_count_min": 3,
+        "citations_from_multiple_chapters": true
+      }
+    },
+    {
+      "name": "Selected Text Summary",
+      "description": "Request to summarize selected technical passage",
+      "request": {
+        "query": "Summarize this section",
+        "selected_text": "Gazebo is a 3D robot simulator that integrates with ROS 2. It provides physics engines (ODE, Bullet, Simbody) for realistic dynamics simulation. Gazebo supports sensor simulation (cameras, LIDAR, IMU) and can render complex environments. It's widely used for testing robot behaviors before deploying to physical hardware, reducing development time and costs.",
+        "conversation_history": null
+      },
+      "expected_response": {
+        "mode": "selected_text",
+        "response_contains": ["Gazebo", "simulator", "ROS"],
+        "source_chunks_count": 0
+      }
+    },
+    {
+      "name": "Specific Chapter Query",
+      "description": "Question about content from a specific chapter",
+      "request": {
+        "query": "What types of sensors are used in humanoid robots for perception?",
+        "selected_text": null,
+        "conversation_history": null
+      },
+      "expected_response": {
+        "mode": "rag",
+        "response_contains": ["sensor", "perception", "camera", "LIDAR"],
+        "source_chunks_count_min": 2,
+        "expected_chapter_citations": ["sensors", "perception"]
+      }
+    },
+    {
+      "name": "Definition Query",
+      "description": "Request for definition of a technical term",
+      "request": {
+        "query": "What is an actuator?",
+        "selected_text": null,
+        "conversation_history": null
+      },
+      "expected_response": {
+        "mode": "rag",
+        "response_contains": ["actuator", "device", "motion", "energy"],
+        "source_chunks_count_min": 1
+      }
+    },
+    {
+      "name": "Comparison Query",
+      "description": "Request comparing two concepts from the book",
+      "request": {
+        "query": "What's the difference between forward kinematics and inverse kinematics?",
+        "selected_text": null,
+        "conversation_history": null
+      },
+      "expected_response": {
+        "mode": "rag",
+        "response_contains": ["forward kinematics", "inverse kinematics", "difference"],
+        "source_chunks_count_min": 2
+      }
+    },
+    {
+      "name": "Empty Selected Text Error",
+      "description": "Invalid request with empty selected text",
+      "request": {
+        "query": "Explain this",
+        "selected_text": "",
+        "conversation_history": null
+      },
+      "expected_error": {
+        "status_code": 400,
+        "error_message_contains": ["empty", "selected text", "invalid"]
+      }
+    },
+    {
+      "name": "Query Too Long Error",
+      "description": "Invalid request exceeding token limit",
+      "request": {
+        "query": "This is a very long query..." + " word".repeat(1500),
+        "selected_text": null,
+        "conversation_history": null
+      },
+      "expected_error": {
+        "status_code": 400,
+        "error_message_contains": ["exceeds", "1000 tokens", "too long"]
+      }
+    }
+  ],
+  "test_instructions": {
+    "setup": [
+      "1. Ensure backend is running (uvicorn src.main:app --reload --port 8000)",
+      "2. Ingest sample book chapters (curl -X POST http://localhost:8000/ingest)",
+      "3. Verify Qdrant contains indexed chunks (check Qdrant dashboard)"
+    ],
+    "execution": [
+      "1. For each example, send POST request to /chat endpoint",
+      "2. Validate response matches expected_response criteria",
+      "3. Check response time (should be <3 seconds)",
+      "4. Verify source_chunks contain proper citations (chapter, section, snippet)",
+      "5. Confirm mode matches request type (rag or selected_text)"
+    ],
+    "validation_criteria": [
+      "Response contains expected keywords (case-insensitive)",
+      "Source chunks count within expected range",
+      "Citations include chapter titles from book",
+      "Timestamp is valid ISO 8601 format",
+      "Mode matches query type (rag vs selected_text)",
+      "No hallucinated content (answers only from book or selected text)"
+    ],
+    "error_cases": [
+      "Empty query → 400 error",
+      "Query >1000 tokens → 400 error",
+      "Selected text >5000 chars → 400 error",
+      "Invalid conversation_history format → 400 error",
+      "Rate limit exceeded → 429 error",
+      "Backend service unavailable → 500 error"
+    ]
+  },
+  "automation_script_example": {
+    "language": "Python",
+    "code": "import requests\nimport json\n\nBASE_URL = 'http://localhost:8000'\n\ndef test_chat_example(example):\n    response = requests.post(\n        f\"{BASE_URL}/chat\",\n        json=example['request'],\n        timeout=5\n    )\n    assert response.status_code == 200\n    data = response.json()\n    assert data['mode'] == example['expected_response']['mode']\n    for keyword in example['expected_response']['response_contains']:\n        assert keyword.lower() in data['response'].lower()\n    print(f\"✓ {example['name']} passed\")\n\n# Load examples and run tests\nwith open('chat-examples.json') as f:\n    examples = json.load(f)['examples']\nfor ex in examples:\n    if 'expected_error' not in ex:\n        test_chat_example(ex)"
+  }
+}

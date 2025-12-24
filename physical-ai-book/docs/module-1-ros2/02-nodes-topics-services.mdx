@@ -1,0 +1,559 @@
+---
+id: nodes-topics-services
+title: 'Nodes, Topics, Services, and Actions'
+sidebar_label: 'Communication Patterns'
+sidebar_position: 2
+description: 'Master the four core communication patterns in ROS 2 for robot coordination'
+keywords: [ros2, nodes, topics, services, actions, publisher, subscriber, client, server]
+---
+
+# Nodes, Topics, Services, and Actions
+
+## The Four Communication Primitives
+
+ROS 2 provides four fundamental patterns for inter-node communication, each optimized for different use cases:
+
+| Pattern        | Type                 | Use Case                | Example                    |
+| -------------- | -------------------- | ----------------------- | -------------------------- |
+| **Topics**     | Publish-Subscribe    | Continuous data streams | Camera images, LiDAR scans |
+| **Services**   | Request-Response     | One-off queries         | Path planning, IK solver   |
+| **Actions**    | Goal-Result-Feedback | Long-running tasks      | Navigation, grasping       |
+| **Parameters** | Configuration        | Runtime tuning          | PID gains, sensor configs  |
+
+Understanding when to use each pattern is critical for building responsive, scalable robot systems.
+
+---
+
+## Topics: Publish-Subscribe Pattern
+
+### **Use Case**: Streaming Sensor Data
+
+Topics implement **asynchronous, many-to-many** communication. Publishers produce data continuously; subscribers consume it without blocking the publisher.
+
+**Real-World Analogy**: A radio station (publisher) broadcasts audio. Multiple radios (subscribers) tune in, but the broadcaster doesn't wait for listeners.
+
+### **Creating a Publisher**
+
+```python title="sensor_publisher.py" showLineNumbers
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
+import math
+
+class LidarPublisher(Node):
+    def __init__(self):
+        super().__init__('lidar_publisher')
+        self.publisher_ = self.create_publisher(LaserScan, 'scan', 10)
+        self.timer = self.create_timer(0.1, self.publish_scan)  # 10 Hz
+        self.get_logger().info('LiDAR publisher started')
+
+    def publish_scan(self):
+        msg = LaserScan()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = 'laser_frame'
+        msg.angle_min = -math.pi
+        msg.angle_max = math.pi
+        msg.angle_increment = math.pi / 180.0
+        msg.range_min = 0.1
+        msg.range_max = 30.0
+        msg.ranges = [1.0] * 360  # Simplified: 360 measurements
+
+        self.publisher_.publish(msg)
+        self.get_logger().debug('Published scan')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = LidarPublisher()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+**Key Points**:
+
+- `create_publisher(MessageType, topic_name, queue_size)`: Queue size controls buffering
+- Timer callback ensures consistent publishing rate (10 Hz = 0.1s period)
+- `header.stamp`: Timestamp for sensor fusion
+
+### **Creating a Subscriber**
+
+```python title="obstacle_detector.py" showLineNumbers
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
+
+class ObstacleDetector(Node):
+    def __init__(self):
+        super().__init__('obstacle_detector')
+        self.subscription = self.create_subscription(
+            LaserScan,
+            'scan',
+            self.scan_callback,
+            10
+        )
+        self.min_safe_distance = 0.5  # 50 cm
+
+    def scan_callback(self, msg):
+        # Find minimum distance in scan
+        min_range = min(msg.ranges)
+
+        if min_range < self.min_safe_distance:
+            self.get_logger().warn(
+                f'Obstacle detected at {min_range:.2f}m!'
+            )
+        else:
+            self.get_logger().info('Path clear')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ObstacleDetector()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+**Callback Execution**: When a message arrives, `scan_callback()` is invoked by the executor. **Warning**: Don't do heavy processing in callbacks—offload to threads or use async executors.
+
+### **Message Types**
+
+ROS 2 uses strongly-typed messages defined in `.msg` files. Common types:
+
+```bash
+# Standard messages
+std_msgs/String
+std_msgs/Int32
+std_msgs/Float64
+
+# Sensor data
+sensor_msgs/Image
+sensor_msgs/LaserScan
+sensor_msgs/Imu
+sensor_msgs/PointCloud2
+
+# Geometry
+geometry_msgs/Twist       # Velocity command
+geometry_msgs/Pose        # Position + Orientation
+geometry_msgs/PoseStamped # Pose with timestamp
+
+# Navigation
+nav_msgs/Odometry
+nav_msgs/Path
+```
+
+**Creating Custom Messages**:
+
+```bash
+# my_package/msg/Humanoid State.msg
+float64 battery_level
+geometry_msgs/Pose torso_pose
+float64[] joint_angles  # 20 DOF
+```
+
+---
+
+## Services: Request-Response Pattern
+
+### **Use Case**: On-Demand Computation
+
+Services implement **synchronous, one-to-one** communication. A client sends a request and blocks until the server responds.
+
+**Real-World Analogy**: Calling a function on a remote computer.
+
+### **Defining a Service**
+
+```bash
+# my_package/srv/ComputeIK.srv
+# Request
+geometry_msgs/Pose target_pose
+---
+# Response
+float64[] joint_angles
+bool success
+string message
+```
+
+### **Creating a Service Server**
+
+```python title="ik_service_server.py" showLineNumbers
+import rclpy
+from rclpy.node import Node
+from my_package.srv import ComputeIK
+import numpy as np
+
+class IKServer(Node):
+    def __init__(self):
+        super().__init__('ik_server')
+        self.srv = self.create_service(
+            ComputeIK,
+            'compute_ik',
+            self.handle_ik_request
+        )
+        self.get_logger().info('IK service ready')
+
+    def handle_ik_request(self, request, response):
+        self.get_logger().info('Received IK request')
+
+        # Simplified IK solver (real implementation uses KDL or similar)
+        target = request.target_pose
+
+        try:
+            # Placeholder: Compute joint angles
+            response.joint_angles = [0.0] * 20  # 20 DOF
+            response.success = True
+            response.message = 'IK solved successfully'
+        except Exception as e:
+            response.success = False
+            response.message = f'IK failed: {str(e)}'
+
+        return response
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = IKServer()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+### **Creating a Service Client**
+
+```python title="ik_client.py" showLineNumbers
+import rclpy
+from rclpy.node import Node
+from my_package.srv import ComputeIK
+from geometry_msgs.msg import Pose
+
+class IKClient(Node):
+    def __init__(self):
+        super().__init__('ik_client')
+        self.client = self.create_client(ComputeIK, 'compute_ik')
+
+        # Wait for service to be available
+        while not self.client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waiting for IK service...')
+
+    def send_request(self, target_pose):
+        request = ComputeIK.Request()
+        request.target_pose = target_pose
+
+        # Asynchronous call
+        future = self.client.call_async(request)
+        rclpy.spin_until_future_complete(self, future)
+
+        if future.result() is not None:
+            response = future.result()
+            if response.success:
+                self.get_logger().info(
+                    f'IK solved: {response.joint_angles}'
+                )
+            else:
+                self.get_logger().error(response.message)
+        else:
+            self.get_logger().error('Service call failed')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = IKClient()
+
+    # Example: Request IK for reaching forward
+    target = Pose()
+    target.position.x = 0.5
+    target.position.y = 0.0
+    target.position.z = 1.0
+
+    node.send_request(target)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+**When to Use Services**:
+
+- ✅ Infrequent requests (< 1 Hz)
+- ✅ Response needed immediately
+- ❌ Continuous data streams (use topics)
+- ❌ Long-running tasks (use actions)
+
+---
+
+## Actions: Goal-Result-Feedback Pattern
+
+### **Use Case**: Long-Running Tasks with Progress Updates
+
+Actions implement **asynchronous, goal-oriented** communication with three components:
+
+1. **Goal**: What to achieve (e.g., "navigate to (x, y)")
+2. **Feedback**: Progress updates (e.g., "50% complete")
+3. **Result**: Final outcome (e.g., "arrived at goal")
+
+**Real-World Analogy**: Ordering a pizza online—you send the order (goal), track delivery status (feedback), and receive confirmation when it arrives (result).
+
+### **Defining an Action**
+
+```bash
+# my_package/action/NavigateToGoal.action
+# Goal
+geometry_msgs/PoseStamped target_pose
+---
+# Result
+bool success
+float64 final_distance_error
+---
+# Feedback
+geometry_msgs/PoseStamped current_pose
+float64 distance_remaining
+```
+
+### **Creating an Action Server**
+
+```python title="navigation_action_server.py" showLineNumbers
+import rclpy
+from rclpy.action import ActionServer
+from rclpy.node import Node
+from my_package.action import NavigateToGoal
+import time
+
+class NavigationServer(Node):
+    def __init__(self):
+        super().__init__('navigation_server')
+        self._action_server = ActionServer(
+            self,
+            NavigateToGoal,
+            'navigate_to_goal',
+            self.execute_callback
+        )
+        self.get_logger().info('Navigation action server ready')
+
+    def execute_callback(self, goal_handle):
+        self.get_logger().info('Executing navigation goal...')
+
+        target = goal_handle.request.target_pose
+        feedback_msg = NavigateToGoal.Feedback()
+
+        # Simulate navigation (simplified)
+        for i in range(10):
+            if goal_handle.is_cancel_requested:
+                goal_handle.canceled()
+                return NavigateToGoal.Result()
+
+            # Update feedback
+            feedback_msg.distance_remaining = (10 - i) * 0.5
+            goal_handle.publish_feedback(feedback_msg)
+
+            time.sleep(0.5)  # Simulate movement
+
+        # Navigation complete
+        goal_handle.succeed()
+        result = NavigateToGoal.Result()
+        result.success = True
+        result.final_distance_error = 0.02  # 2cm error
+
+        return result
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = NavigationServer()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+### **Creating an Action Client**
+
+```python title="navigation_action_client.py" showLineNumbers
+import rclpy
+from rclpy.action import ActionClient
+from rclpy.node import Node
+from my_package.action import NavigateToGoal
+from geometry_msgs.msg import PoseStamped
+
+class NavigationClient(Node):
+    def __init__(self):
+        super().__init__('navigation_client')
+        self._action_client = ActionClient(
+            self,
+            NavigateToGoal,
+            'navigate_to_goal'
+        )
+
+    def send_goal(self, target_pose):
+        goal_msg = NavigateToGoal.Goal()
+        goal_msg.target_pose = target_pose
+
+        self._action_client.wait_for_server()
+        self._send_goal_future = self._action_client.send_goal_async(
+            goal_msg,
+            feedback_callback=self.feedback_callback
+        )
+        self._send_goal_future.add_done_callback(self.goal_response_callback)
+
+    def feedback_callback(self, feedback_msg):
+        feedback = feedback_msg.feedback
+        self.get_logger().info(
+            f'Distance remaining: {feedback.distance_remaining:.2f}m'
+        )
+
+    def goal_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().error('Goal rejected')
+            return
+
+        self.get_logger().info('Goal accepted')
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.get_result_callback)
+
+    def get_result_callback(self, future):
+        result = future.result().result
+        if result.success:
+            self.get_logger().info(
+                f'Navigation succeeded! Error: {result.final_distance_error:.3f}m'
+            )
+        else:
+            self.get_logger().error('Navigation failed')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = NavigationClient()
+
+    target = PoseStamped()
+    target.pose.position.x = 5.0
+    target.pose.position.y = 3.0
+
+    node.send_goal(target)
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+**When to Use Actions**:
+
+- ✅ Tasks taking > 1 second (navigation, grasping)
+- ✅ Need progress feedback
+- ✅ Ability to cancel mid-execution
+- ❌ Simple request-response (use services)
+
+---
+
+## Parameters: Runtime Configuration
+
+Parameters allow tuning node behavior without recompiling code.
+
+```python title="configurable_node.py" showLineNumbers
+import rclpy
+from rclpy.node import Node
+
+class ConfigurableNode(Node):
+    def __init__(self):
+        super().__init__('configurable_node')
+
+        # Declare parameters with defaults
+        self.declare_parameter('max_velocity', 1.0)
+        self.declare_parameter('safety_distance', 0.5)
+        self.declare_parameter('use_lidar', True)
+
+        # Read parameters
+        self.max_vel = self.get_parameter('max_velocity').value
+        self.safety_dist = self.get_parameter('safety_distance').value
+
+        self.get_logger().info(f'Max velocity: {self.max_vel} m/s')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ConfigurableNode()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+**Setting Parameters at Runtime**:
+
+```bash
+# From command line
+ros2 run my_package configurable_node --ros-args -p max_velocity:=2.0
+
+# Using ros2 param CLI
+ros2 param set /configurable_node max_velocity 2.0
+ros2 param get /configurable_node max_velocity
+ros2 param dump /configurable_node > params.yaml
+ros2 run my_package configurable_node --ros-args --params-file params.yaml
+```
+
+---
+
+## Decision Matrix: Which Pattern?
+
+| Scenario             | Pattern       | Reasoning                                          |
+| -------------------- | ------------- | -------------------------------------------------- |
+| Stream camera images | **Topic**     | Continuous data, subscribers don't block publisher |
+| Compute path to goal | **Service**   | One-off request, need answer before proceeding     |
+| Navigate to waypoint | **Action**    | Long-running, need progress updates                |
+| Configure PID gains  | **Parameter** | Runtime tuning without code changes                |
+| Emergency stop       | **Topic**     | Fast, asynchronous broadcast to all nodes          |
+| Grasp object         | **Action**    | Multi-step, cancellable, feedback on grip force    |
+
+---
+
+## Best Practices
+
+### **1. Namespace Your Topics**
+
+```python
+# Good: Namespaced
+self.create_publisher(LaserScan, '/robot1/sensors/scan', 10)
+
+# Bad: Global namespace (collisions with other robots)
+self.create_publisher(LaserScan, 'scan', 10)
+```
+
+### **2. Handle QoS Mismatches**
+
+```bash
+# Diagnose compatibility issues
+ros2 topic info -v /scan
+
+# Check publisher/subscriber QoS
+ros2 topic info /scan --verbose
+```
+
+### **3. Timeout Service Calls**
+
+```python
+# Avoid blocking forever
+future = client.call_async(request)
+rclpy.spin_until_future_complete(node, future, timeout_sec=5.0)
+
+if future.result() is None:
+    logger.error('Service call timed out')
+```
+
+### **4. Use Lifecycle Nodes for Critical Systems**
+
+```python
+# Advanced: Lifecycle management for fault tolerance
+from rclpy.lifecycle import LifecycleNode, LifecycleState
+
+class ManagedNode(LifecycleNode):
+    def on_configure(self, state: LifecycleState):
+        self.publisher_ = self.create_lifecycle_publisher(...)
+        return TransitionCallbackReturn.SUCCESS
+```
+
+---
+
+## Key Takeaways
+
+✅ **Topics**: Asynchronous, many-to-many, streaming data
+
+✅ **Services**: Synchronous, one-to-one, quick requests
+
+✅ **Actions**: Asynchronous, goal-oriented, long-running tasks
+
+✅ **Parameters**: Runtime configuration without recompilation
+
+---
+
+## Next Steps
+
+Now that you understand communication patterns, let's dive into implementing Python-based nodes with rclpy.
+
+[Continue to rclpy Integration →](./03-rclpy-integration.mdx)

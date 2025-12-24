@@ -1,0 +1,369 @@
+---
+id: gazebo-physics
+title: 'Physics Simulation in Gazebo'
+sidebar_label: 'Gazebo Physics'
+sidebar_position: 1
+description: "Master Gazebo's physics engine for realistic robot simulation"
+keywords: [gazebo, physics, simulation, sdf, collision, dynamics, ode, dart]
+---
+
+# Physics Simulation in Gazebo
+
+## Gazebo Architecture
+
+Gazebo is a multi-robot simulator with:
+
+- **gzserver**: Headless physics engine (runs on servers)
+- **gzclient**: 3D visualization (OpenGL rendering)
+- **Plugins**: Extend functionality (sensors, actuators, world dynamics)
+
+**Key Advantage**: Decouple simulation (gzserver) from visualization (gzclient) for performance.
+
+---
+
+## SDF: Simulation Description Format
+
+While URDF describes robot kinematics, **SDF** (Simulation Description Format) describes entire simulation worlds.
+
+```xml title="simple_world.sdf" showLineNumbers
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <world name="default">
+
+    <!-- Physics Engine Settings -->
+    <physics type="ode">
+      <max_step_size>0.001</max_step_size>  <!-- 1ms timestep -->
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+
+    <!-- Lighting -->
+    <light type="directional" name="sun">
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- Ground Plane -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>100</mu>  <!-- Friction coefficient -->
+                <mu2>50</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Obstacle (Box) -->
+    <model name="obstacle">
+      <pose>2 0 0.5 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>10</mass>
+          <inertia>
+            <ixx>0.83</ixx> <iyy>0.83</iyy> <izz>0.83</izz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry>
+            <box><size>1 1 1</size></box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box><size>1 1 1</size></box>
+          </geometry>
+          <material>
+            <ambient>1 0 0 1</ambient>  <!-- Red -->
+          </material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>
+```
+
+**Launching the World**:
+
+```bash
+gazebo simple_world.sdf
+```
+
+---
+
+## Physics Engines
+
+Gazebo supports multiple physics backends:
+
+| Engine      | Pros                         | Cons                   | Use Case                        |
+| ----------- | ---------------------------- | ---------------------- | ------------------------------- |
+| **ODE**     | Fast, stable                 | Less accurate contacts | Wheeled robots, quick iteration |
+| **DART**    | Accurate contacts, multibody | Slower                 | Humanoids, manipulation         |
+| **Bullet**  | Real-time performance        | Less mature            | Fast prototyping                |
+| **Simbody** | Biomechanical accuracy       | Complex setup          | Biomimetic robots               |
+
+**Changing Physics Engine**:
+
+```xml
+<physics type="dart">
+  <dart>
+    <solver>
+      <solver_type>dantzig</solver_type>
+    </solver>
+    <collision_detector>fcl</collision_detector>
+  </dart>
+</physics>
+```
+
+---
+
+## Tuning Physics Parameters
+
+### **Timestep** (Critical for Stability)
+
+```xml
+<physics type="ode">
+  <max_step_size>0.001</max_step_size>  <!-- Smaller = more stable -->
+  <real_time_update_rate>1000</real_time_update_rate>  <!-- 1 / max_step_size -->
+</physics>
+```
+
+**Rule of Thumb**: Use 1ms (0.001s) for humanoids, 5ms (0.005s) for wheeled robots.
+
+### **Gravity**
+
+```xml
+<gravity>0 0 -9.81</gravity>  <!-- Earth gravity -->
+<gravity>0 0 -3.721</gravity>  <!-- Mars gravity -->
+```
+
+### **Contact Dynamics**
+
+```xml
+<surface>
+  <friction>
+    <ode>
+      <mu>1.0</mu>   <!-- Static friction -->
+      <mu2>1.0</mu2> <!-- Dynamic friction -->
+    </ode>
+  </friction>
+  <contact>
+    <ode>
+      <kp>1e6</kp>  <!-- Stiffness (higher = harder surfaces) -->
+      <kd>100</kd>  <!-- Damping (higher = less bounce) -->
+    </ode>
+  </contact>
+</surface>
+```
+
+---
+
+## Spawning URDF Robots in Gazebo
+
+```bash
+# Launch empty Gazebo world
+gazebo --verbose
+
+# Spawn robot from URDF
+ros2 run gazebo_ros spawn_entity.py \
+  -entity my_humanoid \
+  -file /path/to/humanoid.urdf \
+  -x 0 -y 0 -z 1.0
+```
+
+**Programmatic Spawning**:
+
+```python title="spawn_robot.py" showLineNumbers
+import rclpy
+from gazebo_msgs.srv import SpawnEntity
+
+def spawn_robot():
+    rclpy.init()
+    node = rclpy.create_node('entity_spawner')
+    client = node.create_client(SpawnEntity, '/spawn_entity')
+
+    request = SpawnEntity.Request()
+    request.name = 'my_humanoid'
+    request.xml = open('/path/to/robot.urdf').read()
+    request.initial_pose.position.z = 1.0
+
+    future = client.call_async(request)
+    rclpy.spin_until_future_complete(node, future)
+
+    if future.result() is not None:
+        node.get_logger().info('Robot spawned successfully')
+    else:
+        node.get_logger().error('Failed to spawn robot')
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    spawn_robot()
+```
+
+---
+
+## Gazebo Plugins
+
+### **1. Contact Sensor**
+
+Detect when robot foot touches ground (for bipedal walking).
+
+```xml
+<gazebo reference="left_foot">
+  <sensor name="left_foot_contact" type="contact">
+    <contact>
+      <collision>left_foot_collision</collision>
+    </contact>
+    <update_rate>100</update_rate>
+  </sensor>
+  <plugin name="gazebo_ros_bumper" filename="libgazebo_ros_bumper.so">
+    <bumperTopicName>/left_foot_contact</bumperTopicName>
+    <frameName>left_foot</frameName>
+  </plugin>
+</gazebo>
+```
+
+### **2. Joint State Publisher**
+
+Publish current joint positions/velocities.
+
+```xml
+<gazebo>
+  <plugin name="gazebo_ros_joint_state_publisher"
+          filename="libgazebo_ros_joint_state_publisher.so">
+    <update_rate>100</update_rate>
+  </plugin>
+</gazebo>
+```
+
+### **3. Differential Drive Controller**
+
+For mobile bases (before adding legs).
+
+```xml
+<gazebo>
+  <plugin name="differential_drive_controller"
+          filename="libgazebo_ros_diff_drive.so">
+    <left_joint>left_wheel_joint</left_joint>
+    <right_joint>right_wheel_joint</right_joint>
+    <wheel_separation>0.4</wheel_separation>
+    <wheel_diameter>0.2</wheel_diameter>
+    <command_topic>/cmd_vel</command_topic>
+    <odometry_topic>/odom</odometry_topic>
+  </plugin>
+</gazebo>
+```
+
+---
+
+## Building Complex Worlds
+
+```xml title="warehouse.sdf" showLineNumbers
+<model name="warehouse">
+  <static>true</static>
+  <link name="link">
+    <collision name="wall_north">
+      <pose>10 0 1 0 0 0</pose>
+      <geometry>
+        <box><size>20 0.2 2</size></box>
+      </geometry>
+    </collision>
+    <visual name="visual_north">
+      <pose>10 0 1 0 0 0</pose>
+      <geometry>
+        <box><size>20 0.2 2</size></box>
+      </geometry>
+      <material><ambient>0.7 0.7 0.7 1</ambient></material>
+    </visual>
+    <!-- Repeat for other walls -->
+  </link>
+</model>
+
+<!-- Import external models -->
+<include>
+  <uri>model://coke_can</uri>
+  <pose>5 3 0.5 0 0 0</pose>
+</include>
+```
+
+**Model Database**: Gazebo includes 100s of models (`~/.gazebo/models/`) or use [Ignition Fuel](https://app.gazebosim.org/fuel/models).
+
+---
+
+## Performance Optimization
+
+### **1. Reduce Collision Complexity**
+
+```xml
+<!-- Bad: High-poly mesh -->
+<collision>
+  <geometry>
+    <mesh><uri>model://robot/meshes/head.dae</uri></mesh>
+  </geometry>
+</collision>
+
+<!-- Good: Simplified bounding box -->
+<collision>
+  <geometry>
+    <box><size>0.2 0.15 0.25</size></box>
+  </geometry>
+</collision>
+```
+
+### **2. Disable Shadows**
+
+```bash
+gazebo --verbose -g  # GUI-only mode (no physics)
+```
+
+### **3. Parallelize Worlds**
+
+Run multiple Gazebo instances with different `GAZEBO_MASTER_URI`.
+
+---
+
+## Best Practices
+
+✅ **Start Simple**: Test with box primitives before adding complex meshes
+
+✅ **Validate URDF**: `check_urdf robot.urdf` before spawning
+
+✅ **Monitor Physics Rate**: `gz stats -p` (should match `real_time_update_rate`)
+
+✅ **Use DART for Humanoids**: Better contact handling for feet
+
+---
+
+## Next Steps
+
+Now that you understand Gazebo physics, let's integrate virtual sensors.
+
+[Continue to Sensor Simulation →](./02-sensor-simulation.mdx)

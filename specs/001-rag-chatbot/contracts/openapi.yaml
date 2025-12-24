@@ -1,0 +1,415 @@
+openapi: 3.0.3
+info:
+  title: RAG Chatbot API
+  description: |
+    Backend API for the Integrated RAG Chatbot embedded in the Physical AI & Humanoid Robotics book.
+
+    Supports two query modes:
+    - **RAG Mode**: Semantic search across indexed book chapters using Qdrant vector database
+    - **Selected-Text Mode**: Context-limited answers based on user-selected text only
+
+    Deployed on Hugging Face Spaces; accessed by Docusaurus frontend on GitHub Pages.
+  version: 1.0.0
+  contact:
+    name: Physical AI Book Team
+    url: https://github.com/your-username/physical-ai-book
+  license:
+    name: MIT
+
+servers:
+  - url: https://your-username-physical-ai-book-rag.hf.space
+    description: Production (Hugging Face Spaces)
+  - url: http://localhost:8000
+    description: Local development
+
+tags:
+  - name: chatbot
+    description: Chatbot interaction endpoints
+  - name: admin
+    description: Administrative endpoints (ingestion, maintenance)
+  - name: monitoring
+    description: Health and status endpoints
+
+paths:
+  /chat:
+    post:
+      tags:
+        - chatbot
+      summary: Submit a query to the chatbot
+      description: |
+        Main chatbot interaction endpoint. Supports two modes:
+        1. **RAG Mode** (default): If `selected_text` is not provided, performs semantic search on indexed book content
+        2. **Selected-Text Mode**: If `selected_text` is provided, answers based solely on that text
+
+        Optionally accepts conversation history for context-aware follow-up questions.
+      operationId: chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatQuery'
+            examples:
+              rag_query:
+                summary: RAG mode query
+                value:
+                  query: "What are the main types of actuators used in humanoid robots?"
+                  conversation_history: []
+              selected_text_query:
+                summary: Selected-text mode query
+                value:
+                  query: "Explain this in simpler terms"
+                  selected_text: "Hydraulic actuators use pressurized fluid to generate mechanical force. They offer high power-to-weight ratios, making them suitable for heavy-duty humanoid applications."
+              followup_query:
+                summary: Follow-up question with history
+                value:
+                  query: "How do they compare to electric motors?"
+                  conversation_history:
+                    - role: "user"
+                      content: "What are hydraulic actuators?"
+                    - role: "assistant"
+                      content: "Hydraulic actuators use pressurized fluid..."
+      responses:
+        '200':
+          description: Successful response with generated answer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              examples:
+                rag_response:
+                  summary: RAG mode response
+                  value:
+                    response: "Humanoid robots use three main types of actuators: (1) Electric motors for precision positioning, (2) Hydraulic actuators for high-force applications, and (3) Pneumatic actuators for lightweight tasks. Each type has specific trade-offs in power, weight, and control complexity."
+                    source_chunks:
+                      - chapter: "Chapter 3: Actuators"
+                        section: "Electric Motors"
+                        snippet: "Electric motors excel in precision positioning and are widely used in humanoid joints requiring fine control..."
+                      - chapter: "Chapter 3: Actuators"
+                        section: "Hydraulic Systems"
+                        snippet: "Hydraulic actuators provide superior force output, suitable for heavy-duty applications like lifting or pushing..."
+                    mode: "rag"
+                    timestamp: "2025-12-22T10:45:23.123Z"
+                selected_text_response:
+                  summary: Selected-text mode response
+                  value:
+                    response: "This paragraph explains that hydraulic actuators work by using pressurized fluid (like oil) to create strong mechanical force. The key advantage is their high power-to-weight ratio, meaning they can produce a lot of force without being very heavy. This makes them ideal for humanoid robots that need to perform heavy-duty tasks like lifting or pushing objects."
+                    source_chunks: []
+                    mode: "selected_text"
+                    timestamp: "2025-12-22T10:46:15.456Z"
+        '400':
+          description: Invalid request (e.g., query too long, malformed history)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Bad Request"
+                message: "Query exceeds 1000 tokens (1234 tokens provided)"
+                status_code: 400
+        '429':
+          description: Rate limit exceeded (OpenRouter/Cohere API limit)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Rate Limit Exceeded"
+                message: "The chatbot is experiencing high demand. Please try again in a moment."
+                status_code: 429
+        '500':
+          description: Internal server error (AI service failure, database error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Internal Server Error"
+                message: "The chatbot is temporarily unavailable. Please try again later."
+                status_code: 500
+
+  /ingest:
+    post:
+      tags:
+        - admin
+      summary: Trigger book content ingestion and indexing
+      description: |
+        Parses MDX book chapters, chunks content, generates embeddings, and stores in Qdrant.
+
+        **Use Cases**:
+        - Initial indexing on deployment
+        - Re-indexing after book content updates
+        - Manual trigger for testing
+
+        **Note**: This endpoint may take several minutes to complete for 10-15 chapters.
+        Consider running as background task or with extended timeout.
+      operationId: ingest
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestRequest'
+            example:
+              content_dir: "chapters"
+      responses:
+        '200':
+          description: Ingestion completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestResponse'
+              example:
+                indexed_files: 12
+                total_chunks: 487
+                duration_seconds: 143.5
+                message: "Successfully indexed 12 chapters into 487 chunks"
+        '409':
+          description: Ingestion already in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Conflict"
+                message: "Ingestion already in progress. Please wait for completion."
+                status_code: 409
+        '500':
+          description: Ingestion failed (parsing error, API failure)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Internal Server Error"
+                message: "Ingestion failed: Unable to connect to Qdrant"
+                status_code: 500
+
+  /health:
+    get:
+      tags:
+        - monitoring
+      summary: Health check endpoint
+      description: |
+        Returns service health status and connectivity to external dependencies.
+
+        **Service Checks**:
+        - Qdrant: Vector database connectivity
+        - Neon: Postgres database connectivity
+        - Cohere: Embeddings API availability
+        - OpenRouter: AI generation API availability
+      operationId: health
+      responses:
+        '200':
+          description: All services healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                version: "1.0.0"
+                services:
+                  qdrant: "connected"
+                  neon: "connected"
+                  cohere: "available"
+                  openrouter: "available"
+        '503':
+          description: One or more services degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "degraded"
+                version: "1.0.0"
+                services:
+                  qdrant: "connected"
+                  neon: "connected"
+                  cohere: "unavailable"
+                  openrouter: "available"
+
+components:
+  schemas:
+    ChatQuery:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 4000
+          description: User's question (max 1000 tokens)
+          example: "What are the advantages of hydraulic actuators over electric motors?"
+        selected_text:
+          type: string
+          maxLength: 5000
+          nullable: true
+          description: User-selected text for context-limited mode (optional)
+          example: "Hydraulic actuators use pressurized fluid to generate mechanical force..."
+        conversation_history:
+          type: array
+          maxItems: 10
+          nullable: true
+          description: Previous messages for context-aware responses (optional, max 10 messages)
+          items:
+            $ref: '#/components/schemas/Message'
+
+    Message:
+      type: object
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+          description: Message sender role
+        content:
+          type: string
+          description: Message text content
+
+    ChatResponse:
+      type: object
+      required:
+        - response
+        - source_chunks
+        - mode
+        - timestamp
+      properties:
+        response:
+          type: string
+          minLength: 1
+          description: Generated answer text
+          example: "Hydraulic actuators offer several advantages: (1) Higher power-to-weight ratio..."
+        source_chunks:
+          type: array
+          description: Citations for retrieved content (empty for selected-text mode)
+          items:
+            $ref: '#/components/schemas/SourceChunk'
+        mode:
+          type: string
+          enum: [rag, selected_text]
+          description: Query mode used
+        timestamp:
+          type: string
+          format: date-time
+          description: Response generation time (ISO 8601)
+          example: "2025-12-22T10:45:23.123Z"
+
+    SourceChunk:
+      type: object
+      required:
+        - chapter
+        - snippet
+      properties:
+        chapter:
+          type: string
+          description: Chapter title
+          example: "Chapter 3: Actuators"
+        section:
+          type: string
+          nullable: true
+          description: Section heading (if available)
+          example: "Hydraulic Systems"
+        snippet:
+          type: string
+          maxLength: 200
+          description: Relevant excerpt from chunk
+          example: "Hydraulic actuators use pressurized fluid to generate mechanical force. They offer high power-to-weight ratios..."
+
+    IngestRequest:
+      type: object
+      properties:
+        content_dir:
+          type: string
+          nullable: true
+          description: Path to book chapters directory (optional, defaults to configured path)
+          example: "chapters"
+
+    IngestResponse:
+      type: object
+      required:
+        - indexed_files
+        - total_chunks
+        - duration_seconds
+      properties:
+        indexed_files:
+          type: integer
+          minimum: 0
+          description: Number of MDX files successfully indexed
+          example: 12
+        total_chunks:
+          type: integer
+          minimum: 0
+          description: Total number of chunks created
+          example: 487
+        duration_seconds:
+          type: number
+          format: float
+          minimum: 0
+          description: Time taken for ingestion (seconds)
+          example: 143.5
+        message:
+          type: string
+          description: Human-readable summary
+          example: "Successfully indexed 12 chapters into 487 chunks"
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - version
+        - services
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded]
+          description: Overall service health
+        version:
+          type: string
+          description: API version
+          example: "1.0.0"
+        services:
+          type: object
+          description: External service connectivity status
+          properties:
+            qdrant:
+              type: string
+              enum: [connected, unavailable]
+            neon:
+              type: string
+              enum: [connected, unavailable]
+            cohere:
+              type: string
+              enum: [available, unavailable]
+            openrouter:
+              type: string
+              enum: [available, unavailable]
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - status_code
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "Bad Request"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Query exceeds 1000 tokens"
+        status_code:
+          type: integer
+          description: HTTP status code
+          example: 400
+
+security: []
+
+externalDocs:
+  description: Feature Specification
+  url: https://github.com/your-username/physical-ai-book/blob/001-rag-chatbot/specs/001-rag-chatbot/spec.md

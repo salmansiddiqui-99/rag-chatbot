@@ -1,0 +1,6 @@
+build/
+.docusaurus/
+node_modules/
+*.lock
+package-lock.json
+.git/

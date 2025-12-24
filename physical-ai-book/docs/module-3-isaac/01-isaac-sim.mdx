@@ -1,0 +1,281 @@
+---
+id: isaac-sim
+title: 'Isaac Sim Synthetic Data Generation'
+sidebar_label: 'Isaac Sim'
+sidebar_position: 1
+description: 'Generate photorealistic training datasets with NVIDIA Isaac Sim and Replicator'
+keywords: [isaac sim, synthetic data, omniverse, replicator, domain randomization, usd]
+---
+
+# Isaac Sim Synthetic Data Generation
+
+## Why Synthetic Data?
+
+Training perception models requires millions of labeled images. Manual labeling costs:
+
+- **ImageNet** (1.4M images): $50,000+, 18 months
+- **COCO** (330K images): $25,000+, 12 months
+
+**Isaac Sim generates perfect labels automatically**: bounding boxes, segmentation masks, depth, pose.
+
+---
+
+## Installation
+
+### **Option 1: Omniverse Cloud** (Recommended)
+
+```bash
+# Free 1-year trial
+# Visit: https://www.nvidia.com/en-us/omniverse/
+# Launch Isaac Sim directly in browser
+```
+
+### **Option 2: Local Install**
+
+```bash
+# Requirements: RTX GPU, Ubuntu 22.04
+# Download Omniverse Launcher
+wget https://install.launcher.omniverse.nvidia.com/installers/omniverse-launcher-linux.AppImage
+chmod +x omniverse-launcher-linux.AppImage
+./omniverse-launcher-linux.AppImage
+
+# In Launcher: Install Isaac Sim 2023.1.1
+```
+
+---
+
+## Isaac Sim Basics
+
+### **USD Format** (Universal Scene Description)
+
+Isaac Sim uses Pixar's USD format for scenes:
+
+```python title="create_scene.py" showLineNumbers
+from pxr import Usd, UsdGeom
+
+# Create stage
+stage = Usd.Stage.CreateNew('my_scene.usd')
+
+# Add ground plane
+UsdGeom.Mesh.Define(stage, '/World/GroundPlane')
+ground = UsdGeom.Mesh.Get(stage, '/World/GroundPlane')
+ground.CreatePointsAttr([(-10,-10,0), (10,-10,0), (10,10,0), (-10,10,0)])
+
+# Save
+stage.Save()
+```
+
+### **Loading URDF Robots**
+
+```python
+import omni.isaac.core.utils.stage as stage_utils
+
+# Import URDF
+stage_utils.add_reference_to_stage(
+    usd_path="/Isaac/Robots/Humanoid/atlas.usd",
+    prim_path="/World/Atlas"
+)
+```
+
+---
+
+## Synthetic Data Pipeline
+
+### **1. Scene Setup**
+
+```python title="warehouse_scene.py" showLineNumbers
+from omni.isaac.kit import SimulationApp
+simulation_app = SimulationApp({"headless": False})
+
+from omni.isaac.core import World
+from omni.isaac.core.objects import DynamicCuboid
+import numpy as np
+
+# Create world
+world = World()
+world.scene.add_default_ground_plane()
+
+# Add random obstacles
+np.random.seed(42)
+for i in range(20):
+    pos = np.random.uniform(-5, 5, size=2)
+    DynamicCuboid(
+        prim_path=f"/World/Obstacle_{i}",
+        position=np.append(pos, 0.5),
+        size=0.5,
+        color=np.random.rand(3)
+    )
+
+world.reset()
+simulation_app.update()
+```
+
+### **2. Domain Randomization**
+
+```python title="randomize.py" showLineNumbers
+from omni.replicator.core import randomizer
+
+# Randomize lighting
+with randomizer.gate():
+    randomizer.light(
+        intensity=randomizer.uniform(500, 2000),
+        color=randomizer.color_temperature(randomizer.uniform(3000, 7000))
+    )
+
+# Randomize materials
+with randomizer.gate():
+    randomizer.texture(
+        textures=["/Path/To/Texture1.png", "/Path/To/Texture2.png"],
+        project_uvw=True
+    )
+
+# Randomize camera pose
+with randomizer.gate():
+    randomizer.camera_pose(
+        camera="/World/Camera",
+        position=randomizer.uniform((-2, -2, 0.5), (2, 2, 2)),
+        look_at="/World/Atlas/torso"
+    )
+```
+
+### **3. Data Capture with Replicator**
+
+```python title="capture_data.py" showLineNumbers
+import omni.replicator.core as rep
+
+# Define camera
+camera = rep.create.camera(position=(3, 3, 2), look_at=(0, 0, 1))
+
+# Define render products
+render_product = rep.create.render_product(camera, resolution=(640, 480))
+
+# Attach writers (annotators)
+writer = rep.WriterRegistry.get("BasicWriter")
+writer.initialize(
+    output_dir="/output/synthetic_data",
+    rgb=True,
+    bounding_box_2d_tight=True,
+    semantic_segmentation=True,
+    distance_to_camera=True
+)
+writer.attach([render_product])
+
+# Run simulation
+with rep.trigger.on_frame(num_frames=1000):
+    rep.randomizer.register(randomize_scene)  # Custom randomization
+
+rep.orchestrator.run()
+```
+
+**Output Structure**:
+
+```
+/output/synthetic_data/
+├── rgb_0000.png
+├── rgb_0001.png
+├── bounding_box_2d_tight_0000.json
+├── semantic_segmentation_0000.png
+└── distance_to_camera_0000.npy
+```
+
+---
+
+## Training with Synthetic Data
+
+```python title="train_detector.py" showLineNumbers
+import torch
+from torchvision.models.detection import fasterrcnn_resnet50_fpn
+from torch.utils.data import Dataset, DataLoader
+import json
+from PIL import Image
+
+class SyntheticDataset(Dataset):
+    def __init__(self, data_dir):
+        self.data_dir = data_dir
+        self.images = sorted(Path(data_dir).glob("rgb_*.png"))
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        # Load image
+        img = Image.open(self.images[idx]).convert("RGB")
+        img_tensor = transforms.ToTensor()(img)
+
+        # Load annotations
+        anno_path = self.images[idx].replace("rgb", "bounding_box_2d_tight").replace(".png", ".json")
+        with open(anno_path) as f:
+            anno = json.load(f)
+
+        boxes = torch.tensor(anno['bboxes'], dtype=torch.float32)
+        labels = torch.tensor(anno['labels'], dtype=torch.int64)
+
+        target = {"boxes": boxes, "labels": labels}
+        return img_tensor, target
+
+# Train
+dataset = SyntheticDataset("/output/synthetic_data")
+loader = DataLoader(dataset, batch_size=4, shuffle=True)
+
+model = fasterrcnn_resnet50_fpn(pretrained=False, num_classes=10)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.005)
+
+model.train()
+for epoch in range(10):
+    for images, targets in loader:
+        loss_dict = model(images, targets)
+        losses = sum(loss for loss in loss_dict.values())
+        optimizer.zero_grad()
+        losses.backward()
+        optimizer.step()
+```
+
+---
+
+## ROS 2 Integration
+
+```python title="isaac_ros_bridge.py" showLineNumbers
+from omni.isaac.core.utils.extensions import enable_extension
+enable_extension("omni.isaac.ros2_bridge")
+
+import omni.graph.core as og
+
+# Create ROS 2 camera publisher
+keys = og.Controller.Keys
+(graph, nodes, _, _) = og.Controller.edit(
+    {"graph_path": "/ActionGraph", "evaluator_name": "execution"},
+    {
+        keys.CREATE_NODES: [
+            ("OnPlaybackTick", "omni.graph.action.OnPlaybackTick"),
+            ("CameraHelper", "omni.isaac.ros2_bridge.ROS2CameraHelper"),
+        ],
+        keys.CONNECT: [
+            ("OnPlaybackTick.outputs:tick", "CameraHelper.inputs:execIn"),
+        ],
+        keys.SET_VALUES: [
+            ("CameraHelper.inputs:topicName", "/isaac/camera/rgb"),
+            ("CameraHelper.inputs:frameId", "camera_frame"),
+        ],
+    },
+)
+```
+
+---
+
+## Key Takeaways
+
+✅ **Synthetic Data**: Unlimited labeled datasets with perfect ground truth
+
+✅ **Replicator**: Domain randomization for sim-to-real transfer
+
+✅ **USD**: Industry-standard 3D scene format
+
+✅ **ROS 2 Bridge**: Real-time integration with Isaac ROS
+
+---
+
+## Next Steps
+
+Use synthetic data to train perception models, then deploy with Isaac ROS.
+
+[Continue to Isaac ROS VSLAM →](./02-isaac-ros-vslam.mdx)

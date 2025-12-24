@@ -1,0 +1,378 @@
+---
+id: llm-planning
+title: 'LLM Cognitive Planning'
+sidebar_label: 'LLM Planning'
+sidebar_position: 2
+description: 'Use large language models for task decomposition and robot planning'
+keywords:
+  [llm, gpt4, planning, task decomposition, langchain, react, function calling, prompt engineering]
+---
+
+# LLM Cognitive Planning
+
+## LLMs as Robot Brains
+
+Large Language Models can:
+
+- **Decompose Tasks**: "Make coffee" → [Open cabinet, Grasp mug, Fill water, ...]
+- **Reason About World State**: "Is the door open? If not, open it first."
+- **Handle Ambiguity**: "Bring me something to drink" → [Detect available drinks, ask for preference]
+- **Error Recovery**: "Grasping failed → Try different orientation"
+
+---
+
+## Installation
+
+```bash
+pip install openai langchain langchain-openai
+
+# Set API key
+export OPENAI_API_KEY="sk-..."
+```
+
+---
+
+## Basic LLM Integration
+
+```python title="llm_planner.py" showLineNumbers
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+from openai import OpenAI
+
+class LLMPlanner(Node):
+    def __init__(self):
+        super().__init__('llm_planner')
+
+        # OpenAI client
+        self.client = OpenAI()
+
+        # Subscribe to high-level commands
+        self.create_subscription(String, '/voice_command', self.plan_task, 10)
+
+        # Publish step-by-step plan
+        self.plan_pub = self.create_publisher(String, '/task_plan', 10)
+
+        # System prompt
+        self.system_prompt = """
+You are a planning system for a humanoid robot. Given a natural language command,
+decompose it into a sequence of primitive actions:
+- navigate(location)
+- detect_object(object_name)
+- grasp(object_name)
+- place(location)
+- speak(message)
+
+Output JSON array of actions.
+"""
+
+    def plan_task(self, msg):
+        command = msg.data
+        self.get_logger().info(f'Planning for: "{command}"')
+
+        # Call GPT-4
+        response = self.client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": command}
+            ],
+            temperature=0.0  # Deterministic
+        )
+
+        plan = response.choices[0].message.content
+        self.get_logger().info(f'Generated plan: {plan}')
+
+        # Publish plan
+        plan_msg = String()
+        plan_msg.data = plan
+        self.plan_pub.publish(plan_msg)
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(LLMPlanner())
+    rclpy.shutdown()
+```
+
+**Example Output**:
+
+```json
+// Command: "Bring me the red cup from the kitchen"
+[
+  { "action": "navigate", "params": { "location": "kitchen" } },
+  { "action": "detect_object", "params": { "name": "red cup" } },
+  { "action": "grasp", "params": { "object": "red cup" } },
+  { "action": "navigate", "params": { "location": "user" } },
+  { "action": "place", "params": { "location": "table" } },
+  { "action": "speak", "params": { "message": "Here is your red cup" } }
+]
+```
+
+---
+
+## Function Calling for Robot Actions
+
+```python title="function_calling.py" showLineNumbers
+from openai import OpenAI
+import json
+
+client = OpenAI()
+
+# Define available robot functions
+functions = [
+    {
+        "name": "navigate_to",
+        "description": "Navigate robot to a location",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "location": {"type": "string", "description": "Target location (e.g., 'kitchen', 'bedroom')"}
+            },
+            "required": ["location"]
+        }
+    },
+    {
+        "name": "grasp_object",
+        "description": "Grasp an object with the robot's gripper",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "object_name": {"type": "string", "description": "Name of object to grasp"},
+                "approach_angle": {"type": "number", "description": "Angle in radians (default: 0)"}
+            },
+            "required": ["object_name"]
+        }
+    }
+]
+
+def execute_robot_command(command):
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": command}],
+        functions=functions,
+        function_call="auto"
+    )
+
+    message = response.choices[0].message
+
+    if message.function_call:
+        function_name = message.function_call.name
+        arguments = json.loads(message.function_call.arguments)
+
+        print(f"LLM wants to call: {function_name}({arguments})")
+
+        # Dispatch to actual robot functions
+        if function_name == "navigate_to":
+            navigate_to(arguments['location'])
+        elif function_name == "grasp_object":
+            grasp_object(arguments['object_name'], arguments.get('approach_angle', 0))
+
+# Placeholder implementations
+def navigate_to(location):
+    print(f"Navigating to {location}...")
+
+def grasp_object(obj, angle):
+    print(f"Grasping {obj} at angle {angle}...")
+
+# Test
+execute_robot_command("Go to the kitchen and pick up the red mug")
+```
+
+---
+
+## ReAct Pattern (Reasoning + Acting)
+
+```python title="react_agent.py" showLineNumbers
+from langchain.agents import initialize_agent, Tool
+from langchain_openai import ChatOpenAI
+from langchain.agents import AgentType
+
+# Define tools
+def detect_objects_tool(query):
+    # Placeholder: Call object detection model
+    return "Detected: red cup, blue bottle, green plate"
+
+def get_robot_pose_tool(query):
+    return "Robot is at position (2.3, 1.5, 0.0) in map frame"
+
+tools = [
+    Tool(
+        name="DetectObjects",
+        func=detect_objects_tool,
+        description="Detect objects in the robot's field of view"
+    ),
+    Tool(
+        name="GetRobotPose",
+        func=get_robot_pose_tool,
+        description="Get current robot position"
+    )
+]
+
+# Create ReAct agent
+llm = ChatOpenAI(model="gpt-4", temperature=0)
+agent = initialize_agent(
+    tools,
+    llm,
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True
+)
+
+# Execute task
+result = agent.run("Where is the robot, and what objects are nearby?")
+print(result)
+```
+
+**Output**:
+
+```
+Thought: I need to find the robot's location first
+Action: GetRobotPose
+Observation: Robot is at position (2.3, 1.5, 0.0) in map frame
+
+Thought: Now I need to detect nearby objects
+Action: DetectObjects
+Observation: Detected: red cup, blue bottle, green plate
+
+Thought: I have all the information needed
+Final Answer: The robot is at position (2.3, 1.5) and can see a red cup, blue bottle, and green plate nearby.
+```
+
+---
+
+## Memory for Multi-Turn Conversations
+
+```python title="memory_agent.py" showLineNumbers
+from langchain.memory import ConversationBufferMemory
+from langchain_openai import ChatOpenAI
+from langchain.chains import ConversationChain
+
+# Memory to track conversation history
+memory = ConversationBufferMemory()
+
+llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+conversation = ConversationChain(llm=llm, memory=memory, verbose=True)
+
+# Turn 1
+response1 = conversation.predict(input="My name is Alice")
+print(response1)  # "Nice to meet you, Alice!"
+
+# Turn 2 (LLM remembers context)
+response2 = conversation.predict(input="What's my name?")
+print(response2)  # "Your name is Alice."
+
+# Turn 3
+response3 = conversation.predict(input="Bring me the cup from the table")
+print(response3)  # LLM knows "me" refers to Alice
+```
+
+---
+
+## Error Handling & Recovery
+
+```python title="error_recovery.py" showLineNumbers
+def execute_plan_with_recovery(plan_steps):
+    for step in plan_steps:
+        success = execute_action(step)
+
+        if not success:
+            # Ask LLM for recovery strategy
+            recovery_prompt = f"""
+Action failed: {step}
+Current world state: {get_world_state()}
+
+Suggest a recovery action from:
+- retry: Try the same action again
+- replan: Generate a new plan
+- abort: Stop execution
+"""
+
+            response = llm_query(recovery_prompt)
+
+            if "retry" in response.lower():
+                execute_action(step)  # Retry
+            elif "replan" in response.lower():
+                new_plan = llm_replan(plan_steps[plan_steps.index(step):])
+                execute_plan_with_recovery(new_plan)
+                break
+            else:
+                print("Aborting mission")
+                break
+
+def execute_action(step):
+    # Placeholder
+    import random
+    return random.choice([True, False])
+
+def get_world_state():
+    return "Robot at (3, 2), no obstacles detected"
+
+def llm_query(prompt):
+    # Placeholder
+    return "retry"
+
+def llm_replan(remaining_steps):
+    # Placeholder
+    return remaining_steps
+```
+
+---
+
+## Prompt Engineering Best Practices
+
+### **1. Few-Shot Examples**
+
+```python
+system_prompt = """
+You decompose tasks into actions. Examples:
+
+User: "Make coffee"
+Assistant: ["navigate(kitchen)", "grasp(mug)", "place_under(coffee_maker)", ...]
+
+User: "Clean the table"
+Assistant: ["navigate(table)", "detect_object(trash)", "grasp(trash)", ...]
+
+Now decompose this task:
+"""
+```
+
+### **2. Output Formatting**
+
+```python
+system_prompt = """
+Output ONLY valid JSON. Do not include explanations.
+Format: [{"action": "...", "params": {...}}, ...]
+"""
+```
+
+### **3. Safety Constraints**
+
+```python
+system_prompt = """
+CRITICAL SAFETY RULES:
+- Never suggest actions that could harm humans
+- If unsure, ask for clarification instead of guessing
+- Always check if path is clear before navigating
+"""
+```
+
+---
+
+## Key Takeaways
+
+✅ **Task Decomposition**: LLMs break complex commands into primitives
+
+✅ **Function Calling**: Structured API for robot action execution
+
+✅ **ReAct**: Interleave reasoning and action for dynamic planning
+
+✅ **Memory**: Multi-turn conversations with context retention
+
+✅ **Error Recovery**: LLMs suggest recovery strategies when actions fail
+
+---
+
+## Next Steps
+
+Apply all skills in the capstone project: Autonomous Humanoid.
+
+[Continue to Capstone Project →](./03-capstone-project.mdx)

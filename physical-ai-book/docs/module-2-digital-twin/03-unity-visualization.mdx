@@ -1,0 +1,328 @@
+---
+id: unity-visualization
+title: 'High-Fidelity Visualization in Unity'
+sidebar_label: 'Unity Visualization'
+sidebar_position: 3
+description: 'Create photorealistic robot visualizations with Unity and ROS#'
+keywords: [unity, visualization, ros#, hdrp, urdf import, real-time rendering]
+---
+
+# High-Fidelity Visualization in Unity
+
+## Why Unity for Robotics?
+
+**Gazebo** excels at physics simulation but struggles with visual fidelity. **Unity** provides:
+
+- **Photorealistic Rendering**: HDRP (High Definition Render Pipeline) with ray tracing
+- **Asset Ecosystem**: Unity Asset Store (materials, environments, animations)
+- **Cross-Platform**: Deploy to Windows, macOS, Linux, WebGL, VR/AR
+- **Presentation Quality**: Impress stakeholders with cinematic visuals
+
+**Common Workflow**: Simulate physics in Gazebo → Visualize in Unity via ROS# bridge.
+
+---
+
+## Unity Robotics Hub
+
+Unity Technologies provides official ROS integration:
+
+```bash
+# Install Unity 2022.3 LTS
+# Download from: https://unity.com/download
+
+# In Unity, open Package Manager
+# Add package from git URL:
+https://github.com/Unity-Technologies/ROS-TCP-Connector.git?path=/com.unity.robotics.ros-tcp-connector
+
+# Also add:
+https://github.com/Unity-Technologies/URDF-Importer.git?path=/com.unity.robotics.urdf-importer
+```
+
+---
+
+## URDF Import into Unity
+
+### **Step 1: Prepare URDF**
+
+Ensure URDF has `<visual>` tags with mesh files (.dae, .stl, .obj):
+
+```xml
+<visual>
+  <geometry>
+    <mesh filename="package://my_robot/meshes/torso.dae" scale="1 1 1"/>
+  </geometry>
+  <material name="blue">
+    <color rgba="0.2 0.2 0.8 1.0"/>
+  </material>
+</visual>
+```
+
+### **Step 2: Import in Unity**
+
+1. **Assets → Import Robot from URDF**
+2. Select `.urdf` file
+3. Unity auto-generates GameObjects for each link
+4. Joints become Unity's `ArticulationBody` components
+
+### **Step 3: Configure Materials**
+
+Replace default materials with HDRP materials:
+
+```csharp title="MaterialUpgrade.cs"
+// Attach to robot GameObject
+using UnityEngine;
+using UnityEngine.Rendering.HighDefinition;
+
+public class MaterialUpgrade : MonoBehaviour
+{
+    void Start()
+    {
+        foreach (var renderer in GetComponentsInChildren<Renderer>())
+        {
+            Material mat = new Material(Shader.Find("HDRP/Lit"));
+            mat.SetColor("_BaseColor", Color.blue);
+            mat.SetFloat("_Metallic", 0.5f);
+            mat.SetFloat("_Smoothness", 0.7f);
+            renderer.material = mat;
+        }
+    }
+}
+```
+
+---
+
+## ROS# Bridge Setup
+
+### **1. Install ROS# on Ubuntu**
+
+```bash
+# In your ROS 2 workspace
+cd ~/ros2_ws/src
+git clone https://github.com/siemens/ros-sharp.git
+cd ..
+colcon build --packages-select ros_sharp
+
+# Launch ROS# bridge
+ros2 run ros_sharp server
+```
+
+### **2. Connect Unity to ROS 2**
+
+In Unity:
+
+```csharp title="ROSConnection.cs" showLineNumbers
+using Unity.Robotics.ROSTCPConnector;
+using UnityEngine;
+
+public class ROSConnection : MonoBehaviour
+{
+    void Start()
+    {
+        // Connect to ROS# server
+        ROSConnection.GetOrCreateInstance().ConnectOnStart = true;
+        ROSConnection.GetOrCreateInstance().RosIPAddress = "127.0.0.1";
+        ROSConnection.GetOrCreateInstance().RosPort = 10000;
+    }
+}
+```
+
+### **3. Subscribe to Joint States**
+
+```csharp title="JointStateSubscriber.cs" showLineNumbers
+using Unity.Robotics.ROSTCPConnector;
+using RosMessageTypes.Sensor;
+using UnityEngine;
+
+public class JointStateSubscriber : MonoBehaviour
+{
+    private ArticulationBody[] joints;
+
+    void Start()
+    {
+        ROSConnection.GetOrCreateInstance().Subscribe<JointStateMsg>(
+            "/joint_states",
+            UpdateJoints
+        );
+
+        joints = GetComponentsInChildren<ArticulationBody>();
+    }
+
+    void UpdateJoints(JointStateMsg msg)
+    {
+        for (int i = 0; i < msg.position.Length && i < joints.Length; i++)
+        {
+            ArticulationDrive drive = joints[i].xDrive;
+            drive.target = (float)msg.position[i] * Mathf.Rad2Deg;
+            joints[i].xDrive = drive;
+        }
+    }
+}
+```
+
+---
+
+## Camera Rendering
+
+### **Setup HDRP Camera**
+
+```csharp title="CameraPublisher.cs" showLineNumbers
+using Unity.Robotics.ROSTCPConnector;
+using RosMessageTypes.Sensor;
+using UnityEngine;
+
+[RequireComponent(typeof(Camera))]
+public class CameraPublisher : MonoBehaviour
+{
+    private ROSConnection ros;
+    private string topicName = "/unity/camera/image_raw";
+    private float publishRate = 30f; // Hz
+    private float nextPublishTime = 0f;
+
+    private Camera cam;
+    private RenderTexture renderTexture;
+
+    void Start()
+    {
+        ros = ROSConnection.GetOrCreateInstance();
+        ros.RegisterPublisher<ImageMsg>(topicName);
+
+        cam = GetComponent<Camera>();
+        renderTexture = new RenderTexture(640, 480, 24);
+        cam.targetTexture = renderTexture;
+    }
+
+    void Update()
+    {
+        if (Time.time >= nextPublishTime)
+        {
+            PublishImage();
+            nextPublishTime = Time.time + 1f / publishRate;
+        }
+    }
+
+    void PublishImage()
+    {
+        Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGB24, false);
+        RenderTexture.active = renderTexture;
+        tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+        tex.Apply();
+
+        ImageMsg msg = new ImageMsg
+        {
+            header = new RosMessageTypes.Std.HeaderMsg { frame_id = "camera_frame" },
+            height = (uint)tex.height,
+            width = (uint)tex.width,
+            encoding = "rgb8",
+            step = (uint)(tex.width * 3),
+            data = tex.GetRawTextureData()
+        };
+
+        ros.Publish(topicName, msg);
+    }
+}
+```
+
+---
+
+## Lighting and Post-Processing
+
+### **HDRP Volume (Global Illumination)**
+
+1. **GameObject → Volume → Global Volume**
+2. Add **Exposure**, **Tonemapping**, **Bloom** overrides
+3. Set **Exposure Mode** to Automatic
+
+### **Skybox (HDRI)**
+
+```csharp
+// Import HDRI from https://polyhaven.com/hdris
+// Window → Rendering → Lighting
+// Environment → Skybox Material → Select HDRI
+```
+
+---
+
+## Performance Optimization
+
+### **1. Level of Detail (LOD)**
+
+```csharp
+// Add LODGroup component to robot
+LODGroup lodGroup = robot.AddComponent<LODGroup>();
+LOD[] lods = new LOD[3];
+lods[0] = new LOD(0.6f, highDetailRenderers);  // Close
+lods[1] = new LOD(0.3f, medDetailRenderers);   // Medium
+lods[2] = new LOD(0.1f, lowDetailRenderers);   // Far
+lodGroup.SetLODs(lods);
+```
+
+### **2. Occlusion Culling**
+
+```csharp
+// Window → Rendering → Occlusion Culling
+// Bake occlusion data for static objects
+```
+
+---
+
+## Real-Time Synchronization
+
+```csharp title="PoseSynchronizer.cs" showLineNumbers
+using Unity.Robotics.ROSTCPConnector;
+using RosMessageTypes.Geometry;
+using UnityEngine;
+
+public class PoseSynchronizer : MonoBehaviour
+{
+    void Start()
+    {
+        ROSConnection.GetOrCreateInstance().Subscribe<PoseStampedMsg>(
+            "/robot/pose",
+            UpdatePose
+        );
+    }
+
+    void UpdatePose(PoseStampedMsg msg)
+    {
+        // Position
+        Vector3 position = new Vector3(
+            (float)msg.pose.position.x,
+            (float)msg.pose.position.z,  // Unity: Y is up, ROS: Z is up
+            (float)msg.pose.position.y
+        );
+
+        // Orientation
+        Quaternion rotation = new Quaternion(
+            (float)msg.pose.orientation.x,
+            (float)msg.pose.orientation.z,
+            (float)msg.pose.orientation.y,
+            (float)msg.pose.orientation.w
+        );
+
+        transform.position = position;
+        transform.rotation = rotation;
+    }
+}
+```
+
+---
+
+## Key Takeaways
+
+✅ **Unity for Visuals**: Photorealistic rendering, not physics
+
+✅ **ROS# Bridge**: Real-time sync between Gazebo and Unity
+
+✅ **URDF Import**: Automatic conversion to Unity's ArticulationBody
+
+✅ **HDRP**: Ray tracing, global illumination, post-processing
+
+---
+
+## Next Steps
+
+You've completed Module 2! Apply these skills in Project 2: Gazebo Digital Twin.
+
+[View Project 2 Requirements →](../supporting/assessments.mdx)
+
+[Continue to Module 3: NVIDIA Isaac →](../module-3-isaac/index.mdx)

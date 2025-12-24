@@ -1,0 +1,364 @@
+---
+id: ros2-architecture
+title: 'ROS 2 Architecture'
+sidebar_label: 'Architecture'
+sidebar_position: 1
+description: 'Explore the layered architecture of ROS 2 and its core components'
+keywords: [ros2, architecture, dds, rmw, rclcpp, rclpy, middleware, qos]
+---
+
+# ROS 2 Architecture
+
+## The Layered Design Philosophy
+
+ROS 2 is built on a **layered architecture** that separates concerns, enabling flexibility and portability. Understanding these layers is essential for debugging distributed systems and optimizing performance.
+
+```
+┌─────────────────────────────────────────────┐
+│  Application Layer                          │
+│  (Your Nodes: Perception, Planning, Control)│
+├─────────────────────────────────────────────┤
+│  ROS Client Libraries (rclcpp, rclpy)       │
+│  (Publishers, Subscribers, Services, Actions)│
+├─────────────────────────────────────────────┤
+│  ROS Middleware (rmw)                       │
+│  (Abstraction over DDS implementations)      │
+├─────────────────────────────────────────────┤
+│  DDS Layer (Fast DDS, Cyclone DDS, etc.)    │
+│  (Discovery, Serialization, Transport)       │
+├─────────────────────────────────────────────┤
+│  Network/Transport (UDP, Shared Memory)     │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## Layer 1: DDS - The Communication Backbone
+
+### **What is DDS?**
+
+DDS (Data Distribution Service) is an **OMG standard** for real-time, peer-to-peer communication. Unlike HTTP or gRPC, DDS is designed for:
+
+- **Low Latency**: Sub-millisecond message delivery
+- **High Reliability**: Configurable delivery guarantees
+- **Scalability**: Thousands of nodes without central broker
+- **Real-Time**: Deterministic communication for safety-critical systems
+
+**Key Concept**: In ROS 1, the `roscore` master was a single point of failure. ROS 2 uses DDS's decentralized discovery—nodes find each other automatically via multicast.
+
+### **DDS Implementations**
+
+ROS 2 supports multiple DDS vendors via the RMW (ROS Middleware) abstraction:
+
+| DDS Vendor                | Default in ROS 2    | Pros                                | Cons                    |
+| ------------------------- | ------------------- | ----------------------------------- | ----------------------- |
+| **Fast DDS** (eProsima)   | ✅ Humble default   | Feature-rich, well-documented       | Higher memory footprint |
+| **Cyclone DDS** (Eclipse) | Popular alternative | Lightweight, low latency            | Fewer advanced features |
+| **RTI Connext**           | Commercial          | Production-grade, extensive tooling | Requires license        |
+
+**Why does this matter?** You can swap DDS implementations without changing your code—just set an environment variable:
+
+```bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+ros2 run my_package my_node
+```
+
+---
+
+## Layer 2: ROS Middleware (rmw)
+
+The **rmw** layer provides a unified API across DDS vendors. This abstraction allows ROS 2 to:
+
+1. Support new DDS implementations without breaking user code
+2. Enable non-DDS backends (e.g., zenoh for resource-constrained devices)
+3. Provide ROS-specific features (namespaces, node names) on top of DDS
+
+**Example**: When you call `node.create_publisher()`, rmw translates that into DDS-specific calls to create a DataWriter.
+
+---
+
+## Layer 3: ROS Client Libraries
+
+Client libraries provide idiomatic APIs in different languages:
+
+### **rclcpp (C++)**
+
+High-performance, low-level control. Used for:
+
+- Real-time control loops (1 kHz+)
+- Embedded systems (NVIDIA Jetson, Raspberry Pi)
+- Custom memory allocators (zero-copy communication)
+
+```cpp
+#include "rclcpp/rclcpp.hpp"
+
+class MinimalPublisher : public rclcpp::Node {
+public:
+  MinimalPublisher() : Node("minimal_publisher") {
+    publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
+    timer_ = this->create_wall_timer(
+      500ms, std::bind(&MinimalPublisher::timer_callback, this));
+  }
+
+private:
+  void timer_callback() {
+    auto message = std_msgs::msg::String();
+    message.data = "Hello, ROS 2!";
+    publisher_->publish(message);
+  }
+
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+  rclcpp::TimerBase::SharedPtr timer_;
+};
+```
+
+### **rclpy (Python)**
+
+Rapid prototyping, integration with ML libraries (PyTorch, NumPy). Used for:
+
+- Perception pipelines (camera processing, YOLO inference)
+- High-level planning and decision-making
+- Rapid iteration during development
+
+```python
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+class MinimalPublisher(Node):
+    def __init__(self):
+        super().__init__('minimal_publisher')
+        self.publisher_ = self.create_publisher(String, 'topic', 10)
+        self.timer = self.create_timer(0.5, self.timer_callback)
+
+    def timer_callback(self):
+        msg = String()
+        msg.data = 'Hello, ROS 2!'
+        self.publisher_.publish(msg)
+        self.get_logger().info(f'Publishing: "{msg.data}"')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = MinimalPublisher()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+**Language Interoperability**: C++ nodes and Python nodes communicate seamlessly—messages are serialized via DDS's CDR (Common Data Representation) format.
+
+---
+
+## The Computation Graph
+
+ROS 2 organizes software into a **graph of nodes** connected by **topics, services, and actions**.
+
+### **Nodes**
+
+A **node** is a single-purpose process (e.g., "camera driver", "obstacle detector", "motion planner"). Nodes are:
+
+- **Isolated**: Crash in one node doesn't kill others
+- **Distributed**: Nodes can run on different machines
+- **Composable**: Combine nodes into a single process for efficiency
+
+**Example Computation Graph**:
+
+```mermaid
+graph LR
+    A[/camera_driver] -->|/image_raw| B[/object_detector]
+    C[/lidar_driver] -->|/scan| D[/obstacle_detector]
+    B -->|/detected_objects| E[/motion_planner]
+    D -->|/obstacles| E
+    E -->|/cmd_vel| F[/motor_controller]
+```
+
+### **Inspecting the Graph**
+
+```bash
+# List all active nodes
+ros2 node list
+
+# Inspect a specific node
+ros2 node info /camera_driver
+
+# Visualize the graph
+rqt_graph
+```
+
+---
+
+## Quality of Service (QoS) Policies
+
+ROS 2's **QoS** system allows fine-tuning communication reliability and performance. This is critical for robots—losing a single image frame is acceptable, but dropping a motor command is not.
+
+### **Key QoS Parameters**
+
+| Policy          | Options                   | Use Case                                                   |
+| --------------- | ------------------------- | ---------------------------------------------------------- |
+| **Reliability** | Best Effort, Reliable     | Sensor data (best effort) vs. commands (reliable)          |
+| **Durability**  | Volatile, Transient Local | Send only to live subscribers vs. persist for late joiners |
+| **History**     | Keep Last N, Keep All     | Buffer recent messages                                     |
+| **Liveliness**  | Automatic, Manual         | Detect if publisher is still active                        |
+
+### **Example: Configuring QoS**
+
+```python
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+
+# Sensor data: Best effort, keep only latest
+sensor_qos = QoSProfile(
+    reliability=ReliabilityPolicy.BEST_EFFORT,
+    history=HistoryPolicy.KEEP_LAST,
+    depth=1
+)
+
+# Control commands: Reliable, buffer 10 messages
+command_qos = QoSProfile(
+    reliability=ReliabilityPolicy.RELIABLE,
+    history=HistoryPolicy.KEEP_LAST,
+    depth=10
+)
+
+self.scan_sub = self.create_subscription(
+    LaserScan, '/scan', self.scan_callback, sensor_qos)
+
+self.cmd_pub = self.create_publisher(
+    Twist, '/cmd_vel', command_qos)
+```
+
+**Common Pitfall**: QoS policies must be **compatible** between publishers and subscribers. Mismatches cause silent failures—use `ros2 topic info -v /topic` to debug.
+
+---
+
+## Discovery Protocol
+
+### **How Nodes Find Each Other**
+
+ROS 2 uses **Simple Discovery Protocol (SDP)** from DDS:
+
+1. **Participant Announcement**: New node joins, sends multicast UDP packet: "I exist!"
+2. **Endpoint Discovery**: Node advertises topics it publishes/subscribes to
+3. **Matching**: Nodes with compatible topics establish direct connections
+4. **Data Exchange**: P2P communication (no central broker)
+
+**Network Requirements**:
+
+- **Multicast**: UDP multicast must be enabled (check firewall rules)
+- **DDS Domain ID**: Set `ROS_DOMAIN_ID` to isolate multiple robot systems
+
+```bash
+# Robot 1: Domain 0
+export ROS_DOMAIN_ID=0
+
+# Robot 2: Domain 1 (won't see Robot 1's topics)
+export ROS_DOMAIN_ID=1
+```
+
+---
+
+## Performance Optimizations
+
+### **1. Intra-Process Communication**
+
+When publisher and subscriber are in the same process, ROS 2 can bypass serialization and use **shared pointers**.
+
+```python
+# Enable intra-process comms (C++ only, limited Python support)
+rclcpp::NodeOptions options;
+options.use_intra_process_comms(true);
+auto node = std::make_shared<MyNode>(options);
+```
+
+**Speedup**: 10-100x faster for large messages (images, point clouds)
+
+### **2. Component Composition**
+
+Combine multiple nodes into a single process to reduce overhead:
+
+```bash
+# Instead of launching 10 separate processes...
+ros2 run pkg node1 &
+ros2 run pkg node2 &
+# ...
+
+# Compose into one process
+ros2 component standalone pkg node1 node2 node3
+```
+
+### **3. Real-Time Executors**
+
+For control loops requiring deterministic timing:
+
+```cpp
+#include "rclcpp/executors.hpp"
+
+auto executor = std::make_shared<rclcpp::executors::StaticSingleThreadedExecutor>();
+executor->add_node(node);
+executor->spin();
+```
+
+---
+
+## Debugging Tools
+
+### **Command-Line Interface**
+
+```bash
+# Introspection
+ros2 topic list          # List all topics
+ros2 topic echo /scan    # Print messages
+ros2 topic hz /scan      # Measure publish rate
+ros2 topic bw /scan      # Measure bandwidth
+
+# Node inspection
+ros2 node list
+ros2 node info /my_node
+
+# Service calls
+ros2 service list
+ros2 service call /add_two_ints example_interfaces/srv/AddTwoInts "{a: 2, b: 3}"
+
+# Parameter management
+ros2 param list
+ros2 param get /my_node my_param
+ros2 param set /my_node my_param 42
+```
+
+### **Graphical Tools**
+
+- **rqt_graph**: Visualize node graph and topic connections
+- **rqt_plot**: Real-time plotting of numeric topics
+- **rqt_console**: Aggregated log viewer
+- **rviz2**: 3D visualization of robot state and sensor data
+
+---
+
+## Key Takeaways
+
+✅ **ROS 2 = Application Framework + DDS Middleware**
+
+- Application code uses rclcpp/rclpy
+- DDS handles low-level networking
+
+✅ **QoS Policies Matter**
+
+- Tune reliability vs. latency tradeoffs
+- Always check compatibility between publishers and subscribers
+
+✅ **Decentralized Discovery**
+
+- No single point of failure (unlike ROS 1's roscore)
+- Use `ROS_DOMAIN_ID` to isolate robot systems
+
+✅ **Composition for Performance**
+
+- Intra-process communication for large messages
+- Component-based architecture for reduced overhead
+
+---
+
+## Next Steps
+
+Now that you understand the architecture, let's explore the communication primitives that bring this system to life.
+
+[Continue to Nodes, Topics, Services, and Actions →](./02-nodes-topics-services.mdx)

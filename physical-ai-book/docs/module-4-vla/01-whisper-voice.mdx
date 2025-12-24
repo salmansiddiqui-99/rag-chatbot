@@ -1,0 +1,317 @@
+---
+id: whisper-voice
+title: 'Voice-to-Action with Whisper'
+sidebar_label: 'Voice Input'
+sidebar_position: 1
+description: 'Integrate OpenAI Whisper for robust speech-to-text in robotics applications'
+keywords: [whisper, speech recognition, voice control, audio processing, pyaudio, stt]
+---
+
+# Voice-to-Action with Whisper
+
+## Why Whisper?
+
+OpenAI Whisper is a robust speech-to-text model trained on 680,000 hours of multilingual data, offering:
+
+- **High Accuracy**: 95%+ word error rate on clean audio
+- **Noise Robustness**: Works in factories, outdoors, with background noise
+- **Multilingual**: Supports 99 languages
+- **Offline Capable**: Run locally without API calls
+
+---
+
+## Installation
+
+```bash
+# Install Whisper
+pip install openai-whisper
+
+# Audio dependencies
+sudo apt-get install portaudio19-dev python3-pyaudio
+pip install pyaudio sounddevice
+```
+
+---
+
+## Basic Voice Capture
+
+```python title="voice_capture.py" showLineNumbers
+import sounddevice as sd
+import numpy as np
+import whisper
+from scipy.io.wavfile import write
+
+class VoiceCapture:
+    def __init__(self, model_size="base"):
+        # Load Whisper model (tiny, base, small, medium, large)
+        self.model = whisper.load_model(model_size)
+        self.sample_rate = 16000  # Whisper expects 16kHz
+
+    def record_audio(self, duration=5):
+        """Record audio for specified duration"""
+        print(f"Recording for {duration} seconds...")
+        audio = sd.rec(
+            int(duration * self.sample_rate),
+            samplerate=self.sample_rate,
+            channels=1,
+            dtype='float32'
+        )
+        sd.wait()
+        return audio.flatten()
+
+    def transcribe(self, audio):
+        """Transcribe audio to text"""
+        # Whisper expects audio as numpy array
+        result = self.model.transcribe(audio, fp16=False)
+        return result['text']
+
+# Usage
+vc = VoiceCapture(model_size="base")
+audio = vc.record_audio(duration=5)
+text = vc.transcribe(audio)
+print(f"Transcription: {text}")
+```
+
+---
+
+## ROS 2 Voice Command Node
+
+```python title="voice_command_node.py" showLineNumbers
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+import sounddevice as sd
+import whisper
+import threading
+
+class VoiceCommandNode(Node):
+    def __init__(self):
+        super().__init__('voice_command_node')
+
+        # Publisher for transcribed commands
+        self.cmd_pub = self.create_publisher(String, '/voice_command', 10)
+
+        # Whisper model
+        self.model = whisper.load_model("base")
+        self.sample_rate = 16000
+
+        # Activation keyword
+        self.activation_word = "robot"
+        self.is_listening = False
+
+        # Start listening thread
+        self.listen_thread = threading.Thread(target=self.continuous_listen)
+        self.listen_thread.daemon = True
+        self.listen_thread.start()
+
+        self.get_logger().info('Voice command node ready. Say "robot" to activate.')
+
+    def continuous_listen(self):
+        """Continuously listen for activation word"""
+        while True:
+            audio = sd.rec(
+                int(3 * self.sample_rate),  # 3 seconds
+                samplerate=self.sample_rate,
+                channels=1,
+                dtype='float32'
+            )
+            sd.wait()
+
+            # Transcribe
+            result = self.model.transcribe(audio.flatten(), fp16=False)
+            text = result['text'].lower().strip()
+
+            self.get_logger().info(f'Heard: "{text}"')
+
+            # Check for activation
+            if self.activation_word in text:
+                self.get_logger().info('Activated! Listening for command...')
+                self.capture_command()
+
+    def capture_command(self):
+        """Capture and process command after activation"""
+        audio = sd.rec(
+            int(5 * self.sample_rate),  # 5 seconds for command
+            samplerate=self.sample_rate,
+            channels=1,
+            dtype='float32'
+        )
+        sd.wait()
+
+        result = self.model.transcribe(audio.flatten(), fp16=False)
+        command = result['text'].strip()
+
+        self.get_logger().info(f'Command: "{command}"')
+
+        # Publish command
+        msg = String()
+        msg.data = command
+        self.cmd_pub.publish(msg)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = VoiceCommandNode()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+---
+
+## Intent Parsing
+
+```python title="intent_parser.py" showLineNumbers
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+from geometry_msgs.msg import PoseStamped
+import re
+
+class IntentParser(Node):
+    def __init__(self):
+        super().__init__('intent_parser')
+
+        # Subscribe to voice commands
+        self.create_subscription(String, '/voice_command', self.parse_command, 10)
+
+        # Publishers for different intents
+        self.nav_pub = self.create_publisher(PoseStamped, '/goal_pose', 10)
+        self.action_pub = self.create_publisher(String, '/robot_action', 10)
+
+        # Define patterns
+        self.patterns = {
+            'navigate': r'go to (?:the )?(\w+)',
+            'fetch': r'bring (?:me )?(?:the )?(\w+)',
+            'grasp': r'pick up (?:the )?(\w+)',
+            'stop': r'stop|halt|freeze'
+        }
+
+    def parse_command(self, msg):
+        command = msg.data.lower()
+        self.get_logger().info(f'Parsing: "{command}"')
+
+        # Try to match patterns
+        if match := re.search(self.patterns['navigate'], command):
+            location = match.group(1)
+            self.navigate_to(location)
+
+        elif match := re.search(self.patterns['fetch'], command):
+            object_name = match.group(1)
+            self.fetch_object(object_name)
+
+        elif match := re.search(self.patterns['grasp'], command):
+            object_name = match.group(1)
+            self.grasp_object(object_name)
+
+        elif re.search(self.patterns['stop'], command):
+            self.emergency_stop()
+
+        else:
+            self.get_logger().warn(f'Unknown command: "{command}"')
+
+    def navigate_to(self, location):
+        # Map location names to coordinates
+        locations = {
+            'kitchen': (5.0, 3.0),
+            'bedroom': (10.0, 7.0),
+            'living room': (2.0, 1.0)
+        }
+
+        if location in locations:
+            pose = PoseStamped()
+            pose.header.frame_id = 'map'
+            pose.pose.position.x, pose.pose.position.y = locations[location]
+            self.nav_pub.publish(pose)
+            self.get_logger().info(f'Navigating to {location}')
+        else:
+            self.get_logger().error(f'Unknown location: {location}')
+
+    def fetch_object(self, object_name):
+        action = String()
+        action.data = f'fetch:{object_name}'
+        self.action_pub.publish(action)
+        self.get_logger().info(f'Fetching {object_name}')
+
+    def grasp_object(self, object_name):
+        action = String()
+        action.data = f'grasp:{object_name}'
+        self.action_pub.publish(action)
+        self.get_logger().info(f'Grasping {object_name}')
+
+    def emergency_stop(self):
+        action = String()
+        action.data = 'emergency_stop'
+        self.action_pub.publish(action)
+        self.get_logger().warn('Emergency stop activated!')
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(IntentParser())
+    rclpy.shutdown()
+```
+
+---
+
+## Optimization: VAD (Voice Activity Detection)
+
+```python title="vad_integration.py" showLineNumbers
+import webrtcvad
+import numpy as np
+
+class VADProcessor:
+    def __init__(self, sample_rate=16000):
+        self.vad = webrtcvad.Vad(2)  # Aggressiveness: 0-3
+        self.sample_rate = sample_rate
+
+    def is_speech(self, audio_chunk):
+        """Check if audio chunk contains speech"""
+        # Convert float32 to int16
+        audio_int16 = np.int16(audio_chunk * 32767)
+        return self.vad.is_speech(audio_int16.tobytes(), self.sample_rate)
+
+    def filter_silence(self, audio, frame_duration=30):
+        """Remove silence from audio"""
+        frame_size = int(self.sample_rate * frame_duration / 1000)
+        frames = [audio[i:i+frame_size] for i in range(0, len(audio), frame_size)]
+
+        speech_frames = [f for f in frames if self.is_speech(f)]
+        return np.concatenate(speech_frames) if speech_frames else audio
+```
+
+---
+
+## Testing Voice Commands
+
+```bash
+# Terminal 1: Launch voice node
+ros2 run my_robot voice_command_node
+
+# Terminal 2: Monitor commands
+ros2 topic echo /voice_command
+
+# Speak: "Robot, go to the kitchen"
+# Output: data: "go to the kitchen"
+
+# Terminal 3: Monitor parsed intents
+ros2 topic echo /goal_pose
+```
+
+---
+
+## Key Takeaways
+
+✅ **Whisper**: State-of-the-art speech recognition, offline capable
+
+✅ **Activation Words**: "Robot" triggers command listening
+
+✅ **Intent Parsing**: Regex patterns extract actions and parameters
+
+✅ **VAD**: Filter silence to reduce transcription latency
+
+---
+
+## Next Steps
+
+Combine voice input with LLM planning for complex task decomposition.
+
+[Continue to LLM Cognitive Planning →](./02-llm-planning.mdx)

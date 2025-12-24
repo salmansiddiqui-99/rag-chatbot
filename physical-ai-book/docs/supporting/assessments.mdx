@@ -1,0 +1,331 @@
+---
+id: assessments
+title: 'Assessments'
+sidebar_label: 'Projects & Labs'
+sidebar_position: 12
+description: 'Hands-on projects and labs to validate your Physical AI and Humanoid Robotics skills'
+keywords: [assessments, projects, labs, grading, evaluation]
+---
+
+# Assessments
+
+## Grading Breakdown
+
+- **Weekly Labs (40%)**: 13 labs × 3% each (drop lowest 3 scores)
+- **Module Projects (40%)**: 4 projects × 10% each
+- **Capstone Project (20%)**: Final autonomous humanoid demonstration
+
+**Passing Grade**: 70% overall
+
+---
+
+## Project 1: ROS 2 Humanoid Control System
+
+**Module**: [Module 1 - ROS 2](../module-1-ros2/index.mdx)
+**Due**: End of Week 4
+**Weight**: 10%
+
+### Objective
+
+Design a distributed ROS 2 system to control a simulated humanoid robot's joint movements using publishers, subscribers, services, and actions.
+
+### Deliverables
+
+1. **Architecture Diagram**: ROS 2 node graph showing all nodes, topics, and services (PDF or PNG)
+2. **Source Code**: Python package with:
+   - Joint state publisher node
+   - Motion planning service
+   - Emergency stop action server
+   - Launch file for all nodes
+3. **URDF Model**: Humanoid robot description with 20+ degrees of freedom
+4. **Demo Video**: 2-minute screen recording showing:
+   - Robot visualization in RViz2
+   - Joint control via published commands
+   - Service call for motion planning
+   - Emergency stop action execution
+
+### Evaluation Criteria
+
+| Criterion     | Points  | Details                                                  |
+| ------------- | ------- | -------------------------------------------------------- |
+| Code Quality  | 30      | PEP8 compliance, modularity, comments, type hints        |
+| Functionality | 40      | All requirements met, nodes communicate correctly        |
+| URDF Accuracy | 20      | Valid kinematics, proper joint limits, realistic inertia |
+| Documentation | 10      | README with setup instructions, inline docstrings        |
+| **Total**     | **100** |                                                          |
+
+### Resources
+
+- [ROS 2 Architecture](../module-1-ros2/01-architecture.mdx)
+- [URDF for Humanoids](../module-1-ros2/04-urdf-humanoids.mdx)
+
+---
+
+## Project 2: Gazebo Digital Twin
+
+**Module**: [Module 2 - Digital Twin](../module-2-digital-twin/index.mdx)
+**Due**: End of Week 7
+**Weight**: 10%
+
+### Objective
+
+Create a high-fidelity physics simulation in Gazebo with virtual sensors and implement sensor fusion for autonomous obstacle avoidance.
+
+### Deliverables
+
+1. **Gazebo World File**: SDF file with:
+   - Realistic physics parameters (gravity, friction, timestep)
+   - Environment with obstacles, stairs, or uneven terrain
+   - Lighting and ground plane
+2. **Sensor Integration**:
+   - LiDAR (360° scan, 10 Hz)
+   - Depth camera (640x480, 30 Hz)
+   - IMU (100 Hz)
+3. **Sensor Fusion Node**: Python node that combines sensor data for obstacle detection
+4. **RViz2 Configuration**: Save RViz config showing all sensor visualizations
+5. **Demo Video**: 3-minute demonstration of robot navigating environment using sensors
+
+### Evaluation Criteria
+
+| Criterion            | Points  | Details                                       |
+| -------------------- | ------- | --------------------------------------------- |
+| Physics Accuracy     | 25      | Stable simulation, realistic contact dynamics |
+| Sensor Configuration | 25      | All sensors publishing correct message types  |
+| Fusion Algorithm     | 30      | Combines LiDAR + IMU for robust detection     |
+| Visualization        | 10      | Clear RViz2 setup with all sensor data        |
+| Documentation        | 10      | Instructions for running simulation           |
+| **Total**            | **100** |                                               |
+
+### Resources
+
+- [Gazebo Physics](../module-2-digital-twin/01-gazebo-physics.mdx)
+- [Sensor Simulation](../module-2-digital-twin/02-sensor-simulation.mdx)
+
+---
+
+## Project 3: Isaac ROS VSLAM Integration
+
+**Module**: [Module 3 - NVIDIA Isaac](../module-3-isaac/index.mdx)
+**Due**: End of Week 10
+**Weight**: 10%
+
+### Objective
+
+Implement GPU-accelerated visual SLAM using Isaac ROS and deploy to NVIDIA Jetson hardware (or cloud instance).
+
+### Deliverables
+
+1. **VSLAM Setup**:
+   - Stereo camera configuration (RealSense D435i or simulated)
+   - Isaac ROS VSLAM node running on Jetson Orin Nano
+   - Parameter file tuned for environment
+2. **Map Building**: Generate map of test environment with loop closure
+3. **Localization Demo**: Show real-time pose estimation in RViz2
+4. **Performance Report**:
+   - FPS (frames per second)
+   - Latency (milliseconds)
+   - Tracking accuracy (compare to ground truth)
+5. **Demo Video**: 2-minute video showing VSLAM in action
+
+### Evaluation Criteria
+
+| Criterion        | Points  | Details                                                       |
+| ---------------- | ------- | ------------------------------------------------------------- |
+| VSLAM Deployment | 30      | Successfully running on Jetson with correct topic connections |
+| Map Quality      | 25      | Loop closure detected, drift &lt;5%                           |
+| Performance      | 20      | &gt;20 FPS, &lt;50ms latency                                  |
+| Documentation    | 15      | Setup guide for replication                                   |
+| Analysis         | 10      | Performance report with metrics                               |
+| **Total**        | **100** |                                                               |
+
+### Resources
+
+- [Isaac ROS VSLAM](../module-3-isaac/02-isaac-ros-vslam.mdx)
+- [Nav2 Bipedal](../module-3-isaac/03-nav2-bipedal.mdx)
+
+---
+
+## Capstone: Autonomous Humanoid
+
+**Module**: [Module 4 - VLA](../module-4-vla/index.mdx)
+**Due**: End of Week 13
+**Weight**: 20%
+
+### Objective
+
+Build an end-to-end voice-controlled humanoid robot that integrates all course modules: ROS 2, Gazebo simulation, Isaac perception, and VLA planning.
+
+### System Requirements
+
+**Input**: Voice command (e.g., "Robot, go to the kitchen and bring me the red cup")
+
+**Output**: Autonomous execution with steps:
+
+1. Speech recognition (Whisper)
+2. Task planning (GPT-4 LLM)
+3. Navigation (Nav2 + VSLAM)
+4. Object detection (YOLOv8 or similar)
+5. Grasping (simplified or full MoveIt! integration)
+6. Return navigation
+7. Confirmation speech output
+
+### Deliverables
+
+1. **Source Code** (GitHub repository):
+   - All ROS 2 packages
+   - Launch files
+   - Configuration files (Nav2, sensors, VSLAM)
+   - URDF/SDF models
+   - README with setup instructions
+2. **Documentation**:
+   - Architecture diagram (Mermaid or draw.io)
+   - API documentation (function docstrings)
+   - Troubleshooting guide
+3. **Demo Video** (2-3 minutes):
+   - Show voice command input
+   - Visualize LLM-generated plan
+   - Time-lapse of robot execution
+   - Code walkthrough (30 seconds)
+4. **Evaluation Report**:
+   - Success metrics (completion rate, execution time)
+   - Failure analysis
+   - Future improvements
+
+### Test Scenarios (must pass 4/5)
+
+1. **Simple Fetch**: "Bring me the red cup"
+2. **Multi-Object**: "Bring me the cup and the bottle"
+3. **Recovery**: Introduce obstacle mid-navigation, robot must replan
+4. **Ambiguity**: "Bring me something to drink" (robot asks for clarification)
+5. **Failure Mode**: Place object out of reach, verify graceful error handling
+
+### Evaluation Criteria
+
+| Criterion      | Points  | Details                                                  |
+| -------------- | ------- | -------------------------------------------------------- |
+| Functionality  | 40      | System completes 4/5 test scenarios                      |
+| Code Quality   | 20      | Modularity, PEP8, comments, error handling               |
+| Integration    | 15      | All modules (ROS 2, Gazebo, Isaac, VLA) working together |
+| Documentation  | 10      | Clear README, architecture diagram, API docs             |
+| Demo Video     | 10      | Professional quality, shows end-to-end capability        |
+| Error Handling | 5       | Graceful recovery from failures (replanning, retries)    |
+| **Total**      | **100** |                                                          |
+
+### Resources
+
+- [Capstone Project Guide](../module-4-vla/03-capstone-project.mdx)
+- [Voice-to-Action](../module-4-vla/01-whisper-voice.mdx)
+- [LLM Planning](../module-4-vla/02-llm-planning.mdx)
+
+---
+
+## Weekly Labs (13 Total)
+
+### Lab 1: ROS 2 Publisher-Subscriber (Week 2)
+
+Create a temperature sensor publisher and a monitor subscriber that logs data to a file.
+
+**Submission**: GitHub repo link
+
+---
+
+### Lab 2: ROS 2 Service (Week 2)
+
+Implement a service for robot configuration (e.g., set max velocity).
+
+**Submission**: Source code + demo video
+
+---
+
+### Lab 3: Configurable Node with Parameters (Week 3)
+
+Build a node that reads parameters from YAML file and adjusts behavior at runtime.
+
+**Submission**: Code + parameter file
+
+---
+
+### Lab 4: Gazebo Custom World (Week 5)
+
+Create a Gazebo world with obstacles, stairs, and dynamic objects.
+
+**Submission**: SDF file + screenshots
+
+---
+
+### Lab 5: Sensor Integration (Week 6)
+
+Add LiDAR and depth camera to robot in Gazebo, visualize in RViz2.
+
+**Submission**: Launch file + RViz config
+
+---
+
+### Lab 6: Synthetic Data Generation (Week 8)
+
+Use Isaac Sim to generate 1000 labeled images with domain randomization.
+
+**Submission**: Dataset (sample 100 images) + statistics
+
+---
+
+### Lab 7: VSLAM Deployment (Week 9)
+
+Deploy Isaac ROS VSLAM and build map of simulated environment.
+
+**Submission**: Saved map file + performance metrics
+
+---
+
+### Lab 8: Nav2 Configuration (Week 10)
+
+Configure Nav2 costmaps and planners for humanoid navigation.
+
+**Submission**: Parameter files + navigation demo video
+
+---
+
+### Lab 9: Voice-Controlled Navigation (Week 11)
+
+Build system that navigates to locations via voice commands.
+
+**Submission**: Source code + demo
+
+---
+
+### Labs 10-13: Capstone Support Labs
+
+Incremental development of capstone project components (planning, perception, grasping, integration).
+
+**Submission**: Progress reports + code milestones
+
+---
+
+## Submission Guidelines
+
+- **Format**: GitHub repository (public or private with instructor access)
+- **Structure**: Follow ROS 2 package conventions
+- **Documentation**: README.md must include:
+  - Setup instructions
+  - Dependencies
+  - How to run
+  - Expected output
+- **Videos**: Upload to YouTube/Vimeo, include link in README
+- **Reports**: PDF format, max 5 pages
+
+---
+
+## Academic Integrity
+
+- Collaboration is encouraged for learning, but submissions must be individual work
+- Cite all external resources (tutorials, Stack Overflow, etc.)
+- Use of AI assistants (ChatGPT, Copilot) is allowed but must be documented
+- Plagiarism will result in zero credit for the assignment
+
+---
+
+[View weekly breakdown →](./weekly-breakdown.mdx)
+
+[View hardware requirements →](./hardware-requirements.mdx)
+
+[Return to Homepage →](/)
