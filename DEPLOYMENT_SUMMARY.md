@@ -1,4 +1,25 @@
-# 🚀 Hugging Face Deployment Guide - Summary
+# 🚀 Deployment Status
+
+## 🌐 Live Deployments
+
+### ✅ RAG Chatbot Backend (Hugging Face Spaces)
+**Status**: **DEPLOYED & RUNNING**
+**URL**: [https://salman-giaic-hackathon.hf.space](https://salman-giaic-hackathon.hf.space)
+**API Docs**: [https://salman-giaic-hackathon.hf.space/docs](https://salman-giaic-hackathon.hf.space/docs)
+**Version**: 1.0.0
+**Platform**: Hugging Face Spaces (Docker SDK)
+**Deployed**: December 2025
+
+### 🚀 Physical AI Book (GitHub Pages)
+**Status**: **DEPLOYING** (Workflow in progress)
+**URL**: [https://salmansiddiqui-99.github.io/rag-chatbot/](https://salmansiddiqui-99.github.io/rag-chatbot/)
+**Expected Live**: ~5 minutes from latest workflow run
+**Platform**: GitHub Pages + GitHub Actions
+**Version**: 1.0.0
+
+---
+
+# Hugging Face Deployment Guide - Summary
 
 ## 📚 Documentation Created
 
