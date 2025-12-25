@@ -10,6 +10,8 @@ A comprehensive online course covering Physical AI and Humanoid Robotics, built 
 
 🌐 **Live Site**: [https://salmansiddiqui-99.github.io/rag-chatbot/](https://salmansiddiqui-99.github.io/rag-chatbot/)
 
+> **Note**: Site is deployed automatically via GitHub Actions when changes are pushed to the `physical-ai-book/` directory.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
