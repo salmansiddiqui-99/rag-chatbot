@@ -104,11 +104,11 @@ class VectorService:
         Raises:
             Exception: If Qdrant search fails
         """
-        search_results = self.client.search(
+        search_results = self.client.query_points(
             collection_name=self.COLLECTION_NAME,
-            query_vector=query_vector,
+            query=query_vector,
             limit=limit
-        )
+        ).points
 
         results = []
         for result in search_results:

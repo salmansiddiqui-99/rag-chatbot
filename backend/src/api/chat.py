@@ -13,6 +13,7 @@ from src.utils.prompts import (
 )
 from src.utils.chunking import count_tokens
 from src.config import config
+from src.agent import query_agent
 from datetime import datetime
 
 router = APIRouter()
@@ -188,3 +189,88 @@ async def _handle_selected_text_mode(
         mode=QueryMode.SELECTED_TEXT,
         timestamp=datetime.utcnow()
     )
+
+
+@router.post("/chat-agent", response_model=ChatResponse)
+async def chat_with_agent(query: ChatQuery):
+    """
+    Chat endpoint using OpenAI Agent with function calling.
+
+    This endpoint uses the RAGAgent which:
+    - Dynamically retrieves context via function calling
+    - Ensures responses are grounded in retrieved content
+    - Provides transparent reasoning traces
+    - Includes confidence scores based on retrieval quality
+
+    Args:
+        query: ChatQuery with user question and optional conversation history
+
+    Returns:
+        ChatResponse with AI-generated answer, sources, and metadata
+
+    Raises:
+        HTTPException 400: Invalid query (too long)
+        HTTPException 429: Rate limit exceeded
+        HTTPException 500: Service error
+    """
+    try:
+        # Validate query token count
+        query_tokens = count_tokens(query.query)
+        if query_tokens > config.MAX_QUERY_TOKENS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Query exceeds {config.MAX_QUERY_TOKENS} tokens (got {query_tokens})"
+            )
+
+        # Format conversation history for agent
+        conversation_history = None
+        if query.conversation_history:
+            conversation_history = [
+                {"role": msg.role, "content": msg.content}
+                for msg in query.conversation_history
+            ]
+
+        # Query the agent
+        agent_response = await query_agent(
+            user_query=query.query,
+            conversation_history=conversation_history
+        )
+
+        # Map AgentResponse to ChatResponse format
+        source_chunks = [
+            SourceChunk(
+                chapter=source.chapter,
+                section=source.section,
+                snippet=source.text[:200] + "..." if len(source.text) > 200 else source.text
+            )
+            for source in agent_response.sources
+        ]
+
+        return ChatResponse(
+            response=agent_response.answer,
+            source_chunks=source_chunks,
+            mode=QueryMode.RAG,
+            timestamp=datetime.utcnow(),
+            metadata={
+                "confidence": agent_response.confidence,
+                "reasoning_steps": len(agent_response.reasoning_steps),
+                "tool_calls": agent_response.metadata.get("tool_calls_count", 0),
+                "total_tokens": agent_response.metadata.get("total_tokens", 0),
+                "agent_mode": "function_calling"
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = str(e)
+        if "rate limit" in error_msg.lower() or "429" in error_msg:
+            raise HTTPException(
+                status_code=429,
+                detail="Rate limit exceeded. Please try again in a moment."
+            )
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Agent chat processing failed: {error_msg}"
+            )
