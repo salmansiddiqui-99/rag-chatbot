@@ -4,8 +4,8 @@
 
 ### ✅ RAG Chatbot Backend (Hugging Face Spaces)
 **Status**: **DEPLOYED & RUNNING**
-**URL**: [https://salman-giaic-hackathon.hf.space](https://salman-giaic-hackathon.hf.space)
-**API Docs**: [https://salman-giaic-hackathon.hf.space/docs](https://salman-giaic-hackathon.hf.space/docs)
+**URL**: [https://salman-giaic-rag.hf.space](https://salman-giaic-rag.hf.space)
+**API Docs**: [https://salman-giaic-rag.hf.space/docs](https://salman-giaic-rag.hf.space/docs)
 **Version**: 1.0.0
 **Platform**: Hugging Face Spaces (Docker SDK)
 **Deployed**: December 2025

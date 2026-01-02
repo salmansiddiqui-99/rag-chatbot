@@ -33,10 +33,10 @@ function Section {
 
 # TEST 1: Backend Health
 Section "TEST 1: BACKEND API HEALTH CHECK"
-Log "Testing: https://salman-giaic-hackathon.hf.space"
+Log "Testing: https://salman-giaic-rag.hf.space"
 
 try {
-    $health = Invoke-RestMethod -Uri "https://salman-giaic-hackathon.hf.space/" -Method Get -TimeoutSec 30 -ErrorAction Stop
+    $health = Invoke-RestMethod -Uri "https://salman-giaic-rag.hf.space/" -Method Get -TimeoutSec 30 -ErrorAction Stop
     Log "PASS: Backend accessible"
     Log "Response: $($health | ConvertTo-Json -Compress -Depth 3)"
 
@@ -50,10 +50,10 @@ try {
 
 # TEST 2: API Documentation
 Section "TEST 2: API DOCUMENTATION ENDPOINT"
-Log "Testing: https://salman-giaic-hackathon.hf.space/docs"
+Log "Testing: https://salman-giaic-rag.hf.space/docs"
 
 try {
-    $docs = Invoke-WebRequest -Uri "https://salman-giaic-hackathon.hf.space/docs" -Method Get -TimeoutSec 30 -ErrorAction Stop
+    $docs = Invoke-WebRequest -Uri "https://salman-giaic-rag.hf.space/docs" -Method Get -TimeoutSec 30 -ErrorAction Stop
     Log "PASS: API docs accessible (Status: $($docs.StatusCode))"
     Log "Content-Length: $($docs.Content.Length) bytes"
 } catch {
@@ -77,7 +77,7 @@ foreach ($test in $queries) {
 
     try {
         $body = @{query=$test.q; mode="rag"; conversation_history=@()} | ConvertTo-Json
-        $resp = Invoke-RestMethod -Uri "https://salman-giaic-hackathon.hf.space/chat" `
+        $resp = Invoke-RestMethod -Uri "https://salman-giaic-rag.hf.space/chat" `
             -Method Post `
             -ContentType "application/json" `
             -Body $body `
@@ -265,8 +265,8 @@ Log ""
 Log "Results saved to: test_logs.txt"
 Log ""
 Log "Key URLs:"
-Log "  Backend API: https://salman-giaic-hackathon.hf.space"
-Log "  API Docs: https://salman-giaic-hackathon.hf.space/docs"
+Log "  Backend API: https://salman-giaic-rag.hf.space"
+Log "  API Docs: https://salman-giaic-rag.hf.space/docs"
 Log "  Frontend: https://salmansiddiqui-99.github.io/rag-chatbot/"
 
 Write-Host "`nTest execution complete! Check test_logs.txt for details." -ForegroundColor Green

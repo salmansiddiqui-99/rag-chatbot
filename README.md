@@ -1,7 +1,7 @@
 # RAG Chatbot for Physical AI & Humanoid Robotics Book
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Live-success)](https://salmansiddiqui-99.github.io/rag-chatbot/)
-[![Hugging Face](https://img.shields.io/badge/🤗_Hugging_Face-Live-yellow)](https://salman-giaic-hackathon.hf.space)
+[![Hugging Face](https://img.shields.io/badge/🤗_Hugging_Face-Live-yellow)](https://salman-giaic-rag.hf.space)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-blue)](https://fastapi.tiangolo.com/)
 [![Python](https://img.shields.io/badge/Python-3.11+-green)](https://www.python.org/)
 [![Docusaurus](https://img.shields.io/badge/Docusaurus-3.x-purple)](https://docusaurus.io/)
@@ -23,8 +23,8 @@ The complete Physical AI & Humanoid Robotics book deployed as a static Docusauru
 - Accessibility compliant (WCAG 2.1 AA)
 
 ### 🤖 RAG Chatbot API (Hugging Face Spaces)
-**URL**: [https://salman-giaic-hackathon.hf.space](https://salman-giaic-hackathon.hf.space)
-**API Docs**: [https://salman-giaic-hackathon.hf.space/docs](https://salman-giaic-hackathon.hf.space/docs)
+**URL**: [https://salman-giaic-rag.hf.space](https://salman-giaic-rag.hf.space)
+**API Docs**: [https://salman-giaic-rag.hf.space/docs](https://salman-giaic-rag.hf.space/docs)
 
 FastAPI backend with:
 - Semantic search using Qdrant vector database
@@ -299,7 +299,7 @@ POST /ingest
 }
 ```
 
-See full API documentation at: [https://salman-giaic-hackathon.hf.space/docs](https://salman-giaic-hackathon.hf.space/docs)
+See full API documentation at: [https://salman-giaic-rag.hf.space/docs](https://salman-giaic-rag.hf.space/docs)
 
 ---
 
@@ -332,7 +332,7 @@ MIT License - See LICENSE file for details
 
 ## 📊 Project Status
 
-- ✅ Backend RAG API: **Deployed** ([Hugging Face](https://salman-giaic-hackathon.hf.space))
+- ✅ Backend RAG API: **Deployed** ([Hugging Face](https://salman-giaic-rag.hf.space))
 - ✅ Online Book: **Deployed** ([GitHub Pages](https://salmansiddiqui-99.github.io/rag-chatbot/))
 - ✅ Specifications: **Complete** (2 features documented)
 - ✅ Implementation: **Complete** (All core features functional)
@@ -344,8 +344,8 @@ MIT License - See LICENSE file for details
 ## 🔗 Links
 
 - **Live Book**: https://salmansiddiqui-99.github.io/rag-chatbot/
-- **Live API**: https://salman-giaic-hackathon.hf.space
-- **API Docs**: https://salman-giaic-hackathon.hf.space/docs
+- **Live API**: https://salman-giaic-rag.hf.space
+- **API Docs**: https://salman-giaic-rag.hf.space/docs
 - **GitHub Repository**: https://github.com/salmansiddiqui-99/rag-chatbot
 - **Spec-Driven Development**: https://github.com/anthropics/claude-code
 

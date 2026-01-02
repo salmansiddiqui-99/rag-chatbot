@@ -6,7 +6,7 @@ import ChatWidget from '@site/src/components/ChatWidget';
 export default function Root({ children }) {
   // Production API endpoint (Hugging Face Spaces)
   // For local development, use: http://localhost:8000/api/chatbot/query
-  const apiEndpoint = 'https://salman-giaic-hackathon.hf.space/chat';
+  const apiEndpoint = 'https://salman-giaic-rag.hf.space/chat';
 
   return (
     <>

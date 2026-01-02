@@ -40,10 +40,10 @@ $Title
 # ============================================================================
 Write-TestSection "TEST 1: BACKEND API HEALTH CHECK (Hugging Face)"
 
-Write-TestLog "Testing backend endpoint: https://salman-giaic-hackathon.hf.space"
+Write-TestLog "Testing backend endpoint: https://salman-giaic-rag.hf.space"
 
 try {
-    $BackendHealth = Invoke-RestMethod -Uri "https://salman-giaic-hackathon.hf.space/" -Method Get -TimeoutSec 30
+    $BackendHealth = Invoke-RestMethod -Uri "https://salman-giaic-rag.hf.space/" -Method Get -TimeoutSec 30
     Write-TestLog "✓ PASS: Backend is accessible"
     Write-TestLog "Response: $($BackendHealth | ConvertTo-Json -Depth 5)"
 
@@ -62,10 +62,10 @@ try {
 # ============================================================================
 Write-TestSection "TEST 2: BACKEND API DOCUMENTATION ENDPOINT"
 
-Write-TestLog "Testing API docs: https://salman-giaic-hackathon.hf.space/docs"
+Write-TestLog "Testing API docs: https://salman-giaic-rag.hf.space/docs"
 
 try {
-    $ApiDocs = Invoke-WebRequest -Uri "https://salman-giaic-hackathon.hf.space/docs" -Method Get -TimeoutSec 30
+    $ApiDocs = Invoke-WebRequest -Uri "https://salman-giaic-rag.hf.space/docs" -Method Get -TimeoutSec 30
     if ($ApiDocs.StatusCode -eq 200) {
         Write-TestLog "✓ PASS: API documentation is accessible"
         Write-TestLog "Status Code: $($ApiDocs.StatusCode)"
@@ -101,7 +101,7 @@ foreach ($TestQuery in $TestQueries) {
             conversation_history = @()
         } | ConvertTo-Json
 
-        $Response = Invoke-RestMethod -Uri "https://salman-giaic-hackathon.hf.space/chat" `
+        $Response = Invoke-RestMethod -Uri "https://salman-giaic-rag.hf.space/chat" `
             -Method Post `
             -ContentType "application/json" `
             -Body $QueryBody `
@@ -342,8 +342,8 @@ Write-TestLog ""
 Write-TestLog "All test results have been logged to: test_logs.txt"
 Write-TestLog ""
 Write-TestLog "Key URLs:"
-Write-TestLog "  - Backend API: https://salman-giaic-hackathon.hf.space"
-Write-TestLog "  - API Docs: https://salman-giaic-hackathon.hf.space/docs"
+Write-TestLog "  - Backend API: https://salman-giaic-rag.hf.space"
+Write-TestLog "  - API Docs: https://salman-giaic-rag.hf.space/docs"
 Write-TestLog "  - Frontend: https://salmansiddiqui-99.github.io/rag-chatbot/"
 Write-TestLog ""
 Write-TestLog "Next Steps:"

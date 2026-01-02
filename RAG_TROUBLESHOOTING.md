@@ -157,7 +157,7 @@ curl https://YOUR-CLUSTER-ID.aws.cloud.qdrant.io:6333/collections/physical_ai_bo
 
 **Option A: Via Hugging Face API (Recommended)**
 
-1. Go to: https://salman-giaic-hackathon.hf.space/docs
+1. Go to: https://salman-giaic-rag.hf.space/docs
 2. Find **POST /ingest** endpoint
 3. Click "Try it out"
 4. Use this request body:
@@ -201,7 +201,7 @@ python scripts/ingest.py
 
 **Test via Swagger UI**:
 
-1. Go to: https://salman-giaic-hackathon.hf.space/docs
+1. Go to: https://salman-giaic-rag.hf.space/docs
 2. Find **POST /chat** endpoint
 3. Click "Try it out"
 4. Use this request:
