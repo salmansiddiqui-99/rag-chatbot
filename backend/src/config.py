@@ -23,7 +23,7 @@ class Config:
     # CORS Configuration
     CORS_ORIGINS: str = os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:3000,https://localhost:3000"
+        "http://localhost:3000,https://localhost:3001,https://salmansiddiqui-99.github.io"
     )
 
     # Application Settings
